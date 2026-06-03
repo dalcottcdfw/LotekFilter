@@ -9,15 +9,38 @@
 
 
 parallel_filter_Lotek <- function(input_files,
-                                    output_dir,
-                                    input_file_prefix = NA, # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
-                                    output_file_prefix = "Filtered_",
-                                    # datetime_col, # name of the datetime column
-                                    # tagid_col, # name of the tag ID column
-                                    # pri_col, # name of the nominal tag PRI column
-                                    keep_rejected = FALSE, # TRUE if you want to save a copy of the rejected records with a reason for rejecting
-                                    n_cores    = max(1, round(parallel::detectCores()/2)) # number of cores to use for parallel processing (1 input file per core)
+                                  output_dir,
+                                  input_file_prefix = NA, # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
+                                  output_file_prefix = "Filtered_",
+                                  keep_rejected = FALSE, # TRUE if you want to save a copy of the rejected records with a reason for rejecting
+                                  n_cores    = max(1, round(parallel::detectCores()/2)), # number of cores to use for parallel processing (1 input file per core)
+
+                                  nominalPRI = NULL,           # optionally, provide a single numeric tag pulse rate interval to all tags OR:
+                                  pri_table = NULL,            # provide name of tag pri lookup table AND
+                                  pri_tag_col = NULL,          # provide name of hex tag code column in tag lookup table AND
+                                  pri_value_col = NULL,        # provide name of column containing tag pulse rate interval in tags lookup table
+
+                                  detection_window = 16.6,    # detection_window * nominmal PRI = time window that min_detections must occur to be kept. Arnold Ammann criteria = 16.6 for Lotek
+                                  min_detections = 4,         # number of detections required within the detection window to be kept. Arnold Ammann criteria = 4 for Lotek.
+                                  sd_threshold = 0.025,           # max threshold for standard deviation of observed PRI. Arnold Ammann criteria = 0.025
+                                  multipath_threshold = 0.3,  # time threshold for multipath detections. Detections less than this seconds after first are removed. Arnold Ammann criteria = 0.3 sec
+                                  nominalPRI_threshold = 0.2, # observed PRI must be within this amount of nominal PRI. Arnold Ammann criteria = 20% or 0.20.
+
+
 ) {
+  settings <- list(
+    nominalPRI = nominalPRI,
+    pri_table = pri_table,
+    pri_tag_col = pri_tag_col,
+    pri_value_col = pri_value_col,
+    detection_window = detection_window,
+    min_detections = min_detections,
+    sd_threshold = sd_threshold,
+    multipath_threshold = multipath_threshold,
+    nominalPRI_threshold = nominalPRI_threshold,
+
+    keep_rejected = keep_rejected
+  )
 
   # ---- Validate directories ----
   if (!dir.exists(output_dir)) {
@@ -29,18 +52,12 @@ parallel_filter_Lotek <- function(input_files,
   on.exit(future::plan(future::sequential), add = TRUE)  # always restore on exit
 
   # ---- Process files in parallel ----
-  results <- furrr::future_map(
+  results <- future_map(
     input_files,
-    .f = process_single_file,      # function for processing a single file to be parallelized
-    output_dir   = output_dir,
-    input_file_prefix = input_file_prefix,
-    output_file_prefix = output_file_prefix,
-    datetime_col = datetime_col,
-    tagid_col    = tagid_col,
-    pri_col      = pri_col,
-    keep_rejected = keep_rejected,
-    .options = furrr::furrr_options(seed = TRUE),  # required for parallel RNG safety
-    .progress = TRUE                                # progress bar
+    .f = process_single_file,         # function to process a single file that is being parallelized
+    output_dir = output_dir,
+    settings = settings,              # pass all filter settings/arguments
+    keep_rejected = keep_rejected
   )
 
   # ---- Summarise results ----

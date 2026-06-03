@@ -6,19 +6,19 @@
 #' causing a violation (such as PRI standard deviation)
 
 pri_filter <- function(dets_df,
-                       nominalPRI = NULL,           # optionally, provide a single numeric tag pulse rate interval to all tags OR:
-                       pri_table = NULL,            # provide name of tag pri lookup table AND
-                       pri_tag_col = NULL,          # provide name of hex tag code column in tag lookup table AND
-                       pri_value_col = NULL,        # provide name of column containing tag pulse rate interval in tags lookup table
-
-                       detection_window = 16.6,    # detection_window * nominmal PRI = time window that min_detections must occur to be kept. Arnold Ammann criteria = 16.6 for Lotek
-                       min_detections = 4,         # number of detections required within the detection window to be kept. Arnold Ammann criteria = 4 for Lotek.
-                       sd_threshold = 0.025,           # max threshold for standard deviation of observed PRI. Arnold Ammann criteria = 0.025
-                       multipath_threshold = 0.3,  # time threshold for multipath detections. Detections less than this seconds after first are removed. Arnold Ammann criteria = 0.3 sec
-                       nominalPRI_threshold = 0.2, # observed PRI must be within this amount of nominal PRI. Arnold Ammann criteria = 20% or 0.20.
-
-
+                       settings = settings
 ) {
+
+  nominalPRI <- settings$nominalPRI
+  pri_table <- settings$pri_table
+  pri_tag_col <- settings$pri_tag_col
+  pri_value_col <- settings$pri_value_col
+
+  detection_window <- settings$detection_window
+  min_detections <- settings$min_detections
+  sd_threshold <- settings$sd_threshold
+  multipath_threshold <- settings$multipath_threshold
+  nominalPRI_threshold <- settings$nominalPRI_threshold
 
   # first, identify the tag pulse rate interval:
   if (is.numeric(nominalPRI)) {
@@ -45,7 +45,7 @@ pri_filter <- function(dets_df,
     pri_table <- pri_table |>
       dplyr::select(
         HexID = !!rlang::sym(pri_tag_col), # rename to HexID
-        nominalPRI = !!rlang::sym(PRI_value_col) # rename to nominalPRI
+        nominalPRI = !!rlang::sym(pri_value_col) # rename to nominalPRI
       )
 
     # Join by HexID

@@ -8,9 +8,11 @@
 ### Broad filter function
 # uses pri_filter()
 all_filter_steps <- function(Lotek_input_file = input,
-                             multipath_threshold = 0.3, # default value of Arnold Ammann mutlipath filter
-                             min_dets = 4,             # minimum number of detections required with X fold of nominal PRI. Default = 4 from Arnold Ammann filter criteria
-                             keep_rejected = TRUE) {
+                             settings = settings) {
+
+  multipath_threshold <- settings$multipath_threshold
+  min_dets <- settings$min_dets
+  keep_rejected <- settings$keep_rejected
 
   # ---- Step 1: Sort and compute time differences ----
   Lotek_input_file <- Lotek_input_file |>
@@ -58,7 +60,7 @@ all_filter_steps <- function(Lotek_input_file = input,
       tag_pri <- tag_pri[1]
     }
 
-    result <- pri_filter(tag_df, nominalPRI = tag_pri)
+    result <- pri_filter(tag_df, settings = settings)
 
     clean_list[[i]]    <- result$clean
     rejected_list[[i]] <- result$rejected
