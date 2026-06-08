@@ -26,7 +26,7 @@ parallel_filter_Lotek <- function(input_files,
                                   min_detections = 4,         # number of detections required within the detection window to be kept. Arnold Ammann criteria = 4 for Lotek.
                                   sd_threshold = 0.025,           # max threshold for standard deviation of observed PRI. Arnold Ammann criteria = 0.025
                                   multipath_threshold = 0.3,  # time threshold for multipath detections. Detections less than this seconds after first are removed. Arnold Ammann criteria = 0.3 sec
-                                  nominalPRI_threshold = 0.2, # observed PRI must be within this amount of nominal PRI. Arnold Ammann criteria = 20% or 0.20.
+                                  nominalPRI_threshold = 0.2 # observed PRI must be within this amount of nominal PRI. Arnold Ammann criteria = 20% or 0.20.
 
 
 ) {
