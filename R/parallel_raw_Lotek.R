@@ -30,6 +30,15 @@ parallel_raw_Lotek <- function(
     n_cores = max(1, round(parallel::detectCores() / 2))
 ) {
 
+  # Force evaluation of arguments before clusterExport()
+  force(input_path)
+  force(raw_files)
+  force(output_path)
+  force(output_prefix)
+  force(AllowableTagCodes)
+  force(tz)
+  force(n_cores)
+
   # Normalize file paths
   input_dir_norm  <- normalizePath(input_path, mustWork = FALSE)
   output_dir_norm <- normalizePath(output_path, mustWork = FALSE)

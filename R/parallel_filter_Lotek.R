@@ -79,45 +79,40 @@ parallel_filter_Lotek <- function(input_files,
 
   # Assume all input files live in the same directory; take the first as reference
   input_dir <- dirname(input_files[1])
-
+  # --- Overwrite safety check ---
   if (!allow_overwrite) {
     if (normalizePath(input_dir) == normalizePath(output_path)) {
-
       no_input_prefix  <- is_empty_prefix(input_prefix)
       no_output_prefix <- is_empty_prefix(output_prefix)
 
       if (no_input_prefix && no_output_prefix) {
-        stop(
-          "The output_path matches the input directory and no input_prefix or output_prefix was provided.\n",
-          "This would overwrite the original input files.\n\n",
-          "To avoid overwriting: provide an output_prefix or change output_path.\n",
-          "To continue overwriting input files: change allow_overwrite to TRUE."
-        )
+        stop("Overwrite risk ...")
       }
     }
+  }
 
+  # ---- Validate directories ----
+  if (!dir.exists(output_path)) {
+    message("output_path does not exist, creating: ", output_path)
+    dir.create(output_path, recursive = TRUE)
+  }
 
-    # ---- Validate directories ----
-    if (!dir.exists(output_path)) {
-      message("output_path does not exist, creating: ", output_path)
-      dir.create(output_path, recursive = TRUE)
-    }
+  # ---- Parallel plan ----
+  future::plan(future::multisession, workers = n_cores)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
-    future::plan(future::multisession, workers = n_cores)
-    on.exit(future::plan(future::sequential), add = TRUE)  # always restore on exit
+  # ---- Parallel processing ----
+  results <- future_map(
+    input_files,
+    .f = LotekFilter::process_single_file,
+    settings = settings,
+    keep_rejected = keep_rejected,
+    .options = furrr::furrr_options(
+      packages = c("LotekFilter", "dplyr", "readr")
+    )
+  )
 
-    # ---- Process files in parallel ----
-    results <- future_map(
-      input_files,
-      .f = LotekFilter::process_single_file,         # function to process a single file that is being parallelized
-      settings = settings,              # pass all filter settings/arguments
-      keep_rejected = keep_rejected,
-      .options = furrr::furrr_options(
-        packages = c("LotekFilter", "dplyr", "readr"))
-      )
-
-    # ---- Summarise results ----
-    summary_df <- dplyr::bind_rows(results)
+  summary_df <- dplyr::bind_rows(results)
     message("\nAll files processed.")
     print(summary_df)
 
