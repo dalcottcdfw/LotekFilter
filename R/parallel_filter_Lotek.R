@@ -1,13 +1,36 @@
-#' filter multiple csv files that were pre-processed by parallel_raw_Lotek() or
-#' process_single_raw() in parallel. Or manually reformat data files to match
-#' required format (columns: DateTime, HexID, nominalPRI)
-#' This is the main executable function that the user will deploy to filter data.
-#' This function calls multiple helper functions that contain the actual filter
-#' criteria. process_single_file() performs all of the processes necessary on
-#' on a csv file that has been properly preformatted. parallel_filter_Lotek()
-#' simply parallelizes the work that process_single_file() does.
-
-
+#' Filter multiple Lotek detection CSV files in parallel
+#'
+#' @description
+#' This function processes and filters multiple detection CSV files that were
+#' pre-processed by `parallel_raw_Lotek()` or `process_single_raw()`. Users may
+#' also manually reformat files to match the required format (columns:
+#' `DateTime`, `HexID`, `nominalPRI`). This is the main high-level function that
+#' coordinates multiple helper functions to apply all filter criteria in
+#' parallel. Internally, `parallel_filter_Lotek()` parallelizes the work that
+#' is done by `process_single_file()` on each input file.
+#'
+#' @param input_files Character vector of CSV file paths to process.
+#' @param input_prefix Optional prefix used on input file names.
+#' @param output_prefix Prefix to add to output files (default "Filtered_").
+#' @param output_path Directory where output files will be written.
+#' @param allow_overwrite Logical; whether to allow overwriting input files.
+#' @param keep_rejected Logical; whether to save a file containing rejected
+#'   detections and the reason for rejection.
+#' @param n_cores Number of cores to use for parallel processing.
+#' @param nominalPRI Optional numeric pulse rate interval applied to all tags.
+#' @param pri_table Optional lookup table for tag PRI values.
+#' @param pri_tag_col Name of column containing tag hex IDs (if using pri_table).
+#' @param pri_value_col Name of column containing PRI values (if using pri_table).
+#' @param detection_window Multiplier used to evaluate PRI timing criteria.
+#' @param min_detections Minimum number of detections needed within the window.
+#' @param sd_threshold Maximum allowable standard deviation of observed PRI.
+#' @param multipath_threshold Time threshold for multipath detection filtering.
+#' @param nominalPRI_threshold Proportion threshold for PRI deviation.
+#'
+#' @return A summary dataframe produced by combining the results of processing
+#'   each input CSV file.
+#'
+#' @export
 parallel_filter_Lotek <- function(input_files,
                                   input_prefix = NA, # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
                                   output_prefix = "Filtered_",

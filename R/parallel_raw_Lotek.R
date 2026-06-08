@@ -1,14 +1,28 @@
-#' parallel_raw_Lotek()
-#' Function to process a directory of raw Lotek TXT files exported by WHS Host
-#' batch file conversion tool. This function uses process_single_raw() as the primary
-#' worker function but parallelizes it to use multiple cores to process multiple
-#' input TXt files simulatneously.
-#' NOTE: If input_path and output_path are the same and an output_prefix is not provided,
-#' then the input files will be overwritten.
-
-process_raw_Lotek_dets <- function(
+#' Process multiple raw Lotek TXT files in parallel
+#'
+#' @description
+#' Reads and processes a directory of raw Lotek TXT files exported by the WHS
+#' Host batch conversion tool. Each file is processed using
+#' `process_single_raw()`, and the work is parallelized across multiple CPU
+#' cores so that multiple raw files can be handled simultaneously.
+#'
+#' @param input_path Path to directory containing raw `.TXT` files.
+#' @param raw_files Character vector of TXT filenames to process. Defaults to
+#'   all `.TXT` files in the directory.
+#' @param output_path Directory where processed CSV files will be written.
+#' @param output_prefix Optional prefix to add to output filenames.
+#' @param AllowableTagCodes Optional vector of tag IDs to allow and remove all
+#' others. This is highly recommended whenever possible. It greatly increases
+#' processing speed and decreases file size and resource requirements.
+#' @param tz Character; timezone for timestamp parsing (default `"Etc/GMT+8"`).
+#' @param n_cores Number of CPU cores to use for parallel processing.
+#'
+#' @return Invisibly returns `TRUE` after processing all files.
+#'
+#' @export
+parallel_raw_Lotek <- function(
     input_path,
-    raw_files = list.files(input_path, pattern = "\\.TXT$"),
+    raw_files = list.files(input_path, pattern = "\\.TXT$", ignore.case = TRUE),
     output_path,
     output_prefix = "",
     AllowableTagCodes = NULL,
@@ -16,37 +30,20 @@ process_raw_Lotek_dets <- function(
     n_cores = max(1, round(parallel::detectCores() / 2))
 ) {
 
-  # Normalize file paths to avoid false mismatches (e.g., trailing slashes)
+  # Normalize file paths (good practice on Windows + OneDrive)
   input_dir_norm  <- normalizePath(input_path, mustWork = FALSE)
   output_dir_norm <- normalizePath(output_path, mustWork = FALSE)
 
+  # Ensure output directory exists
+  if (!dir.exists(output_dir_norm)) {
+    message("Creating output directory: ", output_dir_norm)
+    dir.create(output_dir_norm, recursive = TRUE)
+  }
 
-  # File overwrite Protection:
-    # if input and output directories match and no filename prefix files, then
-    # input files will be overwritten.
-    if (input_dir_norm == output_dir_norm && output_prefix == "") {
-
-      message("WARNING: Your output directory is the same as your input directory, ",
-              "and you did not provide an output filename prefix.")
-      message("This will OVERWRITE your original input files.")
-
-      # Prompt user for confirmation
-      response <- readline(
-        prompt = "Type 'YES' to continue and overwrite, or anything else to cancel: "
-      )
-
-      if (toupper(response) != "YES") {
-        stop("Operation cancelled by user to prevent overwriting input data.")
-      }
-
-      message("Proceeding with overwrite as confirmed.")
-    }
-
-  # Execute function in parallel
+  # Start cluster
   cl <- parallel::makeCluster(n_cores)
 
-  # Export all needed variables to cluster workers
-  # (each worker is a new environment and cannot see your current working environment)
+  # Export needed variables and functions to each worker
   parallel::clusterExport(
     cl,
     varlist = c(
@@ -55,38 +52,28 @@ process_raw_Lotek_dets <- function(
       "output_prefix",
       "AllowableTagCodes",
       "raw_files",
+      "tz",
       "process_single_raw"
     ),
     envir = environment()
   )
 
-  # Load required packages on each worker
+  # Load required packages in each worker
   parallel::clusterEvalQ(cl, {
     library(dplyr)
     library(readr)
     library(broman)
   })
 
-  # Run in parallel (with progress bar)
+  # Process raw files in parallel with a progress bar
   pbapply::pblapply(
     X = raw_files,
     FUN = process_single_raw,
     cl = cl
   )
 
-  # Close cluster
+  # Shut down cluster
   parallel::stopCluster(cl)
+
   invisible(TRUE)
 }
-
-
-
-# Example usage:
-# TestInput = "C:\\Users\\DAlcott\\OneDrive - California Department of Fish and Wildlife\\Documents\\R Code Examples\\Practice\\FilterLotekFunctions\\RawLotek"
-# TestOutput = "C:\\Users\\DAlcott\\OneDrive - California Department of Fish and Wildlife\\Documents\\R Code Examples\\Practice\\FilterLotekFunctions\\TestOutput"
-#
-#
-# process_raw_Lotek_dets(input_path = TestInput,
-#                        output_path = TestOutput,
-#                        output_prefix = "Unfiltered",
-#                        n_cores = parallel::detectCores()-2)
