@@ -2,14 +2,7 @@
 % Please edit documentation in R/parallel_filter_Lotek.R
 \name{parallel_filter_Lotek}
 \alias{parallel_filter_Lotek}
-\title{filter multiple csv files that were pre-processed by parallel_raw_Lotek() or
-process_single_raw() in parallel. Or manually reformat data files to match
-required format (columns: DateTime, HexID, nominalPRI)
-This is the main executable function that the user will deploy to filter data.
-This function calls multiple helper functions that contain the actual filter
-criteria. process_single_file() performs all of the processes necessary on
-on a csv file that has been properly preformatted. parallel_filter_Lotek()
-simply parallelizes the work that process_single_file() does.}
+\title{Filter multiple Lotek detection CSV files in parallel}
 \usage{
 parallel_filter_Lotek(
   input_files,
@@ -30,13 +23,50 @@ parallel_filter_Lotek(
   nominalPRI_threshold = 0.2
 )
 }
+\arguments{
+\item{input_files}{Character vector of CSV file paths to process.}
+
+\item{input_prefix}{Optional prefix used on input file names.}
+
+\item{output_prefix}{Prefix to add to output files (default "Filtered_").}
+
+\item{output_path}{Directory where output files will be written.}
+
+\item{allow_overwrite}{Logical; whether to allow overwriting input files.}
+
+\item{keep_rejected}{Logical; whether to save a file containing rejected
+detections and the reason for rejection.}
+
+\item{n_cores}{Number of cores to use for parallel processing.}
+
+\item{nominalPRI}{Optional numeric pulse rate interval applied to all tags.}
+
+\item{pri_table}{Optional lookup table for tag PRI values.}
+
+\item{pri_tag_col}{Name of column containing tag hex IDs (if using pri_table).}
+
+\item{pri_value_col}{Name of column containing PRI values (if using pri_table).}
+
+\item{detection_window}{Multiplier used to evaluate PRI timing criteria.}
+
+\item{min_detections}{Minimum number of detections needed within the window.}
+
+\item{sd_threshold}{Maximum allowable standard deviation of observed PRI.}
+
+\item{multipath_threshold}{Time threshold for multipath detection filtering.}
+
+\item{nominalPRI_threshold}{Proportion threshold for PRI deviation.}
+}
+\value{
+A summary dataframe produced by combining the results of processing
+each input CSV file.
+}
 \description{
-filter multiple csv files that were pre-processed by parallel_raw_Lotek() or
-process_single_raw() in parallel. Or manually reformat data files to match
-required format (columns: DateTime, HexID, nominalPRI)
-This is the main executable function that the user will deploy to filter data.
-This function calls multiple helper functions that contain the actual filter
-criteria. process_single_file() performs all of the processes necessary on
-on a csv file that has been properly preformatted. parallel_filter_Lotek()
-simply parallelizes the work that process_single_file() does.
+This function processes and filters multiple detection CSV files that were
+pre-processed by \code{parallel_raw_Lotek()} or \code{process_single_raw()}. Users may
+also manually reformat files to match the required format (columns:
+\code{DateTime}, \code{HexID}, \code{nominalPRI}). This is the main high-level function that
+coordinates multiple helper functions to apply all filter criteria in
+parallel. Internally, \code{parallel_filter_Lotek()} parallelizes the work that
+is done by \code{process_single_file()} on each input file.
 }
