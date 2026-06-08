@@ -117,5 +117,5 @@ parallel_filter_Lotek <- function(input_files,
     print(summary_df)
 
     invisible(summary_df)
-  }
+
 }
