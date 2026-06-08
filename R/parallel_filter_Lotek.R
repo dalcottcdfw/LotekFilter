@@ -104,7 +104,7 @@ parallel_filter_Lotek <- function(input_files,
   # ---- Parallel processing ----
   results <- future_map(
     input_files,
-    .f = LotekFilter::process_single_file,
+    .f = process_single_file,
     settings = settings,
     keep_rejected = keep_rejected,
     .options = furrr::furrr_options(

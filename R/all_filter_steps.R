@@ -55,7 +55,7 @@ all_filter_steps <- function(Lotek_input_file,
     tag_df <- dplyr::filter(working, HexID == detected_tags[i]) # one tag code at a time
     tag_df <- dplyr::arrange(tag_df, HexID, DateTime)
 
-    result <- LotekFilter::pri_filter(tag_df, settings = settings)
+    result <- pri_filter(tag_df, settings = settings)
 
     clean_list[[i]]    <- result$clean
     rejected_list[[i]] <- result$rejected

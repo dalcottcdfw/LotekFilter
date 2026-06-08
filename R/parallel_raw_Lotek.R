@@ -4,7 +4,9 @@
 #' Reads and processes a directory of raw Lotek TXT files exported by the WHS
 #' Host batch conversion tool. Each file is processed using
 #' `process_single_raw()`, and the work is parallelized across multiple CPU
-#' cores so that multiple raw files can be handled simultaneously.
+#' cores with the \pkg{future}/\pkg{furrr} framework so that multiple raw files
+#' can be handled simultaneously. Constant arguments are passed explicitly to
+#' each worker, so no manual `clusterExport()` is required.
 #'
 #' @param input_path Path to directory containing raw `.TXT` files.
 #' @param raw_files Character vector of TXT filenames to process. Defaults to
@@ -12,10 +14,11 @@
 #' @param output_path Directory where processed CSV files will be written.
 #' @param output_prefix Optional prefix to add to output filenames.
 #' @param AllowableTagCodes Optional vector of tag IDs to allow and remove all
-#' others. This is highly recommended whenever possible. It greatly increases
-#' processing speed and decreases file size and resource requirements.
+#'   others. This is highly recommended whenever possible. It greatly increases
+#'   processing speed and decreases file size and resource requirements.
 #' @param tz Character; timezone for timestamp parsing (default `"Etc/GMT+8"`).
-#' @param n_cores Number of CPU cores to use for parallel processing.
+#' @param n_cores Number of CPU cores (future workers) to use for parallel
+#'   processing.
 #'
 #' @return Invisibly returns `TRUE` after processing all files.
 #'
@@ -30,69 +33,45 @@ parallel_raw_Lotek <- function(
     n_cores = max(1, round(parallel::detectCores() / 2))
 ) {
 
-  # Force evaluation of arguments before clusterExport()
-  force(input_path)
-  force(raw_files)
-  force(output_path)
-  force(output_prefix)
-  force(AllowableTagCodes)
-  force(tz)
-  force(n_cores)
-
-  # Normalize file paths
-  input_dir_norm  <- normalizePath(input_path, mustWork = FALSE)
+  # ---- Normalize paths (absolute paths are safer to hand to workers) ----
+  input_dir_norm  <- normalizePath(input_path,  mustWork = FALSE)
   output_dir_norm <- normalizePath(output_path, mustWork = FALSE)
 
-  # Ensure output directory exists
+  # ---- Ensure output directory exists ----
   if (!dir.exists(output_dir_norm)) {
     message("Creating output directory: ", output_dir_norm)
     dir.create(output_dir_norm, recursive = TRUE)
   }
 
-  # Start cluster
-  cl <- parallel::makeCluster(n_cores)
+  # ---- Guard against an empty file list ----
+  if (length(raw_files) == 0) {
+    stop("No .TXT files found to process in: ", input_dir_norm)
+  }
 
-  # Export needed variables and functions to each worker
-  parallel::clusterExport(
-    cl,
-    varlist = c(
-      "input_path",
-      "output_path",
-      "output_prefix",
-      "AllowableTagCodes",
-      "raw_files",
-      "tz"
-    ),
-    envir = environment()
-  )
-  # Load required packages in each worker
-  parallel::clusterEvalQ(cl, {
-    library(LotekFilter)
-    library(dplyr)
-    library(readr)
-    library(broman)
-  })
+  # ---- Parallel plan (mirrors parallel_filter_Lotek) ----
+  future::plan(future::multisession, workers = n_cores)
+  on.exit(future::plan(future::sequential), add = TRUE)
 
-  # Process raw files in parallel with a progress bar
-
-  pbapply::pblapply(
-    X = raw_files,
-    FUN = function(f) {
-      LotekFilter::process_single_raw(
-        raw_file = f,
-        input_path = input_path,
-        output_path = output_path,
-        output_prefix = output_prefix,
-        AllowableTagCodes = AllowableTagCodes,
-        tz = tz
-      )
-    },
-    cl = cl
+  # ---- Process raw files in parallel ----
+  # Every value the worker needs is passed as a named argument to future_walk(),
+  # which forwards it to each call of process_single_raw(). The arguments travel
+  # with the call itself, so there is no dependence on environment serialization
+  # or clusterExport(). future_walk() is used (not future_map) because we only
+  # care about the side effect of writing the CSVs, not any return value.
+  furrr::future_walk(
+    .x                = raw_files,
+    .f                = LotekFilter::process_single_raw,
+    input_path        = input_dir_norm,
+    output_path       = output_dir_norm,
+    output_prefix     = output_prefix,
+    AllowableTagCodes = AllowableTagCodes,
+    tz                = tz,
+    .progress         = TRUE,
+    .options          = furrr::furrr_options(
+      packages = c("LotekFilter", "dplyr", "readr", "broman")
+    )
   )
 
-
-  # Shut down cluster
-  parallel::stopCluster(cl)
-
+  message("\nAll raw files processed.")
   invisible(TRUE)
 }
