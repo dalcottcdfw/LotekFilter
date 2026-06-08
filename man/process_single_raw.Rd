@@ -15,9 +15,10 @@ if multiple files are retained in a single R environment.}
 \usage{
 process_single_raw(
   raw_file,
-  output_path,
-  output_prefix = "",
-  AllowableTagCodes = NULL,
+  input_path = input_path,
+  output_path = output_path,
+  output_prefix = output_prefix,
+  AllowableTagCodes = AllowableTagCodes,
   tz = "Etc/GMT+8"
 )
 }
