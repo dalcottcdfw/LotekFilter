@@ -9,9 +9,11 @@
 
 
 parallel_filter_Lotek <- function(input_files,
-                                  output_dir,
-                                  input_file_prefix = NA, # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
-                                  output_file_prefix = "Filtered_",
+                                  input_prefix = NA, # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
+                                  output_prefix = "Filtered_",
+                                  output_path,
+                                  allow_overwrite = FALSE, # by default, warn user if input files might be overwritten by output files
+
                                   keep_rejected = FALSE, # TRUE if you want to save a copy of the rejected records with a reason for rejecting
                                   n_cores    = max(1, round(parallel::detectCores()/2)), # number of cores to use for parallel processing (1 input file per core)
 
@@ -39,13 +41,43 @@ parallel_filter_Lotek <- function(input_files,
     multipath_threshold = multipath_threshold,
     nominalPRI_threshold = nominalPRI_threshold,
 
+    output_path = output_path,
+    input_prefix = input_prefix,
+    output_prefix = output_prefix,
+
     keep_rejected = keep_rejected
   )
 
+  # --- Prevent accidental overwrite of input files ---
+  # Helper function to identify if prefix is blank ("", NA, or NULL)
+  is_empty_prefix <- function(x) {
+    is.null(x) || is.na(x) || x == ""
+  }
+
+  # Assume all input files live in the same directory; take the first as reference
+  input_dir <- dirname(input_files[1])
+
+  if (!allow_overwrite) {
+    if (normalizePath(input_dir) == normalizePath(output_path)) {
+
+      no_input_prefix  <- is_empty_prefix(input_prefix)
+      no_output_prefix <- is_empty_prefix(output_prefix)
+
+      if (no_input_prefix && no_output_prefix) {
+        stop(
+          "The output_path matches the input directory and no input_prefix or output_prefix was provided.\n",
+          "This would overwrite the original input files.\n\n",
+          "To avoid overwriting: provide an output_prefix or change output_path.\n",
+          "To continue overwriting input files: change allow_overwrite to TRUE."
+        )
+      }
+    }
+
+
   # ---- Validate directories ----
-  if (!dir.exists(output_dir)) {
-    message("output_dir does not exist, creating: ", output_dir)
-    dir.create(output_dir, recursive = TRUE)
+  if (!dir.exists(output_path)) {
+    message("output_path does not exist, creating: ", output_path)
+    dir.create(output_path, recursive = TRUE)
   }
 
   future::plan(future::multisession, workers = n_cores)
@@ -55,7 +87,6 @@ parallel_filter_Lotek <- function(input_files,
   results <- future_map(
     input_files,
     .f = process_single_file,         # function to process a single file that is being parallelized
-    output_dir = output_dir,
     settings = settings,              # pass all filter settings/arguments
     keep_rejected = keep_rejected
   )

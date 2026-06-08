@@ -17,7 +17,6 @@ pri_filter <- function(dets_df,
   detection_window <- settings$detection_window
   min_detections <- settings$min_detections
   sd_threshold <- settings$sd_threshold
-  multipath_threshold <- settings$multipath_threshold
   nominalPRI_threshold <- settings$nominalPRI_threshold
 
   # first, identify the tag pulse rate interval:
@@ -42,11 +41,12 @@ pri_filter <- function(dets_df,
     }
 
     # Select only needed columns from the pri_table
-    pri_table <- pri_table |>
+    pri_table <- pri_table %>%
       dplyr::select(
-        HexID = !!rlang::sym(pri_tag_col), # rename to HexID
-        nominalPRI = !!rlang::sym(pri_value_col) # rename to nominalPRI
+        HexID = !!rlang::sym(pri_tag_col),
+        nominalPRI = !!rlang::sym(pri_value_col)
       )
+
 
     # Join by HexID
     dets_df <- dets_df |>
@@ -58,6 +58,15 @@ pri_filter <- function(dets_df,
 
   }
 
+  # Extract PRI as a single value
+  tag_pri <- unique(dets_df$nominalPRI) # list of unique values for PRI for this tag
+
+  # Warning:
+  if (length(tag_pri) != 1 || is.na(tag_pri)) {
+    stop("Error in pri_filter(): nominalPRI must be a single value per tag.")
+  }
+
+  nominalPRI <- tag_pri # assign a single value for PRI for next steps
 
   times <- as.numeric(dets_df$DateTime)
   n     <- length(times)

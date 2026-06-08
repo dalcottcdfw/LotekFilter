@@ -8,11 +8,17 @@ process_single_file <- function(filepath,
                                 settings = settings) {
 
   output_path <- settings$output_path
-  input_file_prefix <- settings$input_file_prefix
+  input_prefix <- settings$input_prefix
   output_prefix <- settings$output_prefix
   keep_rejected <- settings$keep_rejected
 
   filename  <- basename(filepath)
+
+  # Remove input file prefix, if provided
+  if (!is.na(input_prefix) && nzchar(input_prefix)) {
+    filename <- sub(paste0("^", input_prefix), "", filename)
+  }
+
   new_name  <- paste0(output_prefix, filename)
 
   out_path  <- file.path(output_path, new_name)
@@ -20,9 +26,9 @@ process_single_file <- function(filepath,
   # Wrap in tryCatch so one bad file doesn't abort the whole run
   tryCatch({
 
-    dat <- readr::read_csv(filepath, show_col_types = FALSE)
+    Lotek_input_file <- readr::read_csv(filepath, show_col_types = FALSE)
 
-    result <- all_filter_steps(dat,
+    result <- all_filter_steps(Lotek_input_file,
                                settings = settings        # pass settings on
                                )
 
@@ -39,9 +45,9 @@ process_single_file <- function(filepath,
     dplyr::tibble(
       input_file   = filename,
       output_file  = new_name,
-      n_input      = nrow(dat),
+      n_input      = nrow(Lotek_input_file),
       n_clean      = nrow(clean_df),
-      n_rejected   = nrow(dat) - nrow(clean_df),
+      n_rejected   = nrow(Lotek_input_file) - nrow(clean_df),
       status       = "success",
       error        = NA_character_
     )

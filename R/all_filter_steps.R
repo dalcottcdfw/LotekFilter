@@ -7,12 +7,17 @@
 
 ### Broad filter function
 # uses pri_filter()
-all_filter_steps <- function(Lotek_input_file = input,
+all_filter_steps <- function(Lotek_input_file,
                              settings = settings) {
 
   multipath_threshold <- settings$multipath_threshold
-  min_dets <- settings$min_dets
+  min_detections <- settings$min_detections
   keep_rejected <- settings$keep_rejected
+  nominalPRI <- settings$nominalPRI
+  pri_table <- settings$pri_table
+  pri_tag_col <- settings$pri_tag_col
+  pri_value_col <- settings$pri_value_col
+
 
   # ---- Step 1: Sort and compute time differences ----
   Lotek_input_file <- Lotek_input_file |>
@@ -27,38 +32,28 @@ all_filter_steps <- function(Lotek_input_file = input,
 
   working <- dplyr::filter(Lotek_input_file, is.na(time_lag) | time_lag >= multipath_threshold)
 
-  # ---- Step 3: Remove tags with fewer than min_dets detections ----
+  # ---- Step 3: Remove tags with fewer than min_detections detections ----
   det_counts <- dplyr::summarise(
     dplyr::group_by(working, HexID),
     det_count = dplyr::n()
   )
   working <- dplyr::left_join(working, det_counts, by = "HexID")
 
-  min_det_records <- dplyr::filter(working, det_count < min_dets)
+  min_det_records <- dplyr::filter(working, det_count < min_detections)
   min_det_records$rejection_reason <- "min_detections"
   min_det_records <- dplyr::select(min_det_records, -det_count)
 
-  working <- dplyr::filter(working, det_count >= min_dets)
+  working <- dplyr::filter(working, det_count >= min_detections)
   working <- dplyr::select(working, -det_count)
 
-  # ---- Step 4: Distance matrix filter of min_dets within pri_threshold ----
-  # Prep by labeling nominalPRI for each tag code
-  tags <- unique(working$HexID)
+  # ---- Step 4: Distance matrix filter of min_detections within pri_threshold ----
+  detected_tags <- unique(working$HexID) # each detected tag code
+  clean_list    <- vector("list", length(detected_tags))
+  rejected_list <- vector("list", length(detected_tags))
 
-  clean_list    <- vector("list", length(tags))
-  rejected_list <- vector("list", length(tags))
-
-  for (i in seq_along(tags)) {
-    tag_df <- dplyr::filter(working, HexID == tags[i])
-    tag_df <- dplyr::arrange(tag_df, DateTime)
-
-    # Each tag may have its own PRInominal if drawn from a column
-    tag_pri <- unique(tag_df$nominalPRI)
-    if (length(tag_pri) > 1) {
-      warning(paste0("Tag ", tags[i], " has multiple PRInominal values. ",
-                     "Using the first value: ", tag_pri[1]))
-      tag_pri <- tag_pri[1]
-    }
+  for (i in seq_along(detected_tags)) {
+    tag_df <- dplyr::filter(working, HexID == detected_tags[i]) # one tag code at a time
+    tag_df <- dplyr::arrange(tag_df, HexID, DateTime)
 
     result <- pri_filter(tag_df, settings = settings)
 
@@ -74,8 +69,8 @@ all_filter_steps <- function(Lotek_input_file = input,
   )
 
   # ---- Tidy up helper columns ----
-  clean_df    <- dplyr::select(clean_df,    -dplyr::all_of(c("time_lag", "nominalPRI")))
-  rejected_df <- dplyr::select(rejected_df, -dplyr::all_of(c("time_lag", "nominalPRI")))
+  clean_df    <- dplyr::select(clean_df,    -dplyr::all_of(c("time_lag")))
+  rejected_df <- dplyr::select(rejected_df, -dplyr::all_of(c("time_lag")))
 
 
   if (keep_rejected) {
