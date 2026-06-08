@@ -61,12 +61,10 @@ parallel_raw_Lotek <- function(
       "output_prefix",
       "AllowableTagCodes",
       "raw_files",
-      "tz",
-      "process_single_raw"
+      "tz"
     ),
-    envir = sys.frame() # import arugment values from session environment (not package environment)
+    envir = environment()
   )
-
   # Load required packages in each worker
   parallel::clusterEvalQ(cl, {
     library(LotekFilter)
