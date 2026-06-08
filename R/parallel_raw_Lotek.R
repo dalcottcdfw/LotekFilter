@@ -66,11 +66,22 @@ parallel_raw_Lotek <- function(
   })
 
   # Process raw files in parallel with a progress bar
+
   pbapply::pblapply(
     X = raw_files,
-    FUN = process_single_raw,
+    FUN = function(f) {
+      process_single_raw(
+        raw_file = f,
+        input_path = input_path,
+        output_path = output_path,
+        output_prefix = output_prefix,
+        AllowableTagCodes = AllowableTagCodes,
+        tz = tz
+      )
+    },
     cl = cl
   )
+
 
   # Shut down cluster
   parallel::stopCluster(cl)

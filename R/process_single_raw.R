@@ -10,12 +10,14 @@
 #' if multiple files are retained in a single R environment.
 
 # ---- Helper function to process raw text files ----
+
 process_single_raw <- function(raw_file,
-                               input_path = input_path,
-                               output_path = output_path,
-                               output_prefix = output_prefix,
-                               AllowableTagCodes = AllowableTagCodes,
-                               tz = "Etc/GMT+8") {
+                               input_path,
+                               output_path,
+                               output_prefix,
+                               AllowableTagCodes,
+                               tz) {
+
 
   # Read the raw text first to identify tag sections
   raw_text <- readr::read_lines(file.path(input_path, raw_file))
