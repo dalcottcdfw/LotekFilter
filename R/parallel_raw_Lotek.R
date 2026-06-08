@@ -30,7 +30,7 @@ parallel_raw_Lotek <- function(
     n_cores = max(1, round(parallel::detectCores() / 2))
 ) {
 
-  # Normalize file paths (good practice on Windows + OneDrive)
+  # Normalize file paths
   input_dir_norm  <- normalizePath(input_path, mustWork = FALSE)
   output_dir_norm <- normalizePath(output_path, mustWork = FALSE)
 

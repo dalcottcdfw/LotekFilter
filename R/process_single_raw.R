@@ -31,7 +31,7 @@ process_single_raw <- function(raw_file,
     file.path(input_path, raw_file),
     skip      = tag_start,
     n_max     = tag_nmax,
-    col_positions = fwf_positions(
+    col_positions = readr::fwf_positions(
       start = c(1, 11, 24, 39, 54, 63, 74),
       end   = c(9, 20, 32, 45, 58, 70, 79),
       col_names = c("Date","Time","SubSec","DecID","TagType","Sensor","SignalStr")
