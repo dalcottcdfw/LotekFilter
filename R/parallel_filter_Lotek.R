@@ -74,27 +74,28 @@ parallel_filter_Lotek <- function(input_files,
     }
 
 
-  # ---- Validate directories ----
-  if (!dir.exists(output_path)) {
-    message("output_path does not exist, creating: ", output_path)
-    dir.create(output_path, recursive = TRUE)
+    # ---- Validate directories ----
+    if (!dir.exists(output_path)) {
+      message("output_path does not exist, creating: ", output_path)
+      dir.create(output_path, recursive = TRUE)
+    }
+
+    future::plan(future::multisession, workers = n_cores)
+    on.exit(future::plan(future::sequential), add = TRUE)  # always restore on exit
+
+    # ---- Process files in parallel ----
+    results <- future_map(
+      input_files,
+      .f = process_single_file,         # function to process a single file that is being parallelized
+      settings = settings,              # pass all filter settings/arguments
+      keep_rejected = keep_rejected
+    )
+
+    # ---- Summarise results ----
+    summary_df <- dplyr::bind_rows(results)
+    message("\nAll files processed.")
+    print(summary_df)
+
+    invisible(summary_df)
   }
-
-  future::plan(future::multisession, workers = n_cores)
-  on.exit(future::plan(future::sequential), add = TRUE)  # always restore on exit
-
-  # ---- Process files in parallel ----
-  results <- future_map(
-    input_files,
-    .f = process_single_file,         # function to process a single file that is being parallelized
-    settings = settings,              # pass all filter settings/arguments
-    keep_rejected = keep_rejected
-  )
-
-  # ---- Summarise results ----
-  summary_df <- dplyr::bind_rows(results)
-  message("\nAll files processed.")
-  print(summary_df)
-
-  invisible(summary_df)
 }
