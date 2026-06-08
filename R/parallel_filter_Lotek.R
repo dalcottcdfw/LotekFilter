@@ -113,8 +113,8 @@ parallel_filter_Lotek <- function(input_files,
       settings = settings,              # pass all filter settings/arguments
       keep_rejected = keep_rejected,
       .options = furrr::furrr_options(
-        packages = c("LotekFilter", "dplyr", "readr")
-    )
+        packages = c("LotekFilter", "dplyr", "readr"))
+      )
 
     # ---- Summarise results ----
     summary_df <- dplyr::bind_rows(results)
