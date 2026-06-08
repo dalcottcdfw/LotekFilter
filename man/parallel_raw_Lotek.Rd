@@ -30,7 +30,8 @@ processing speed and decreases file size and resource requirements.}
 
 \item{tz}{Character; timezone for timestamp parsing (default \code{"Etc/GMT+8"}).}
 
-\item{n_cores}{Number of CPU cores to use for parallel processing.}
+\item{n_cores}{Number of CPU cores (future workers) to use for parallel
+processing.}
 }
 \value{
 Invisibly returns \code{TRUE} after processing all files.
@@ -39,5 +40,7 @@ Invisibly returns \code{TRUE} after processing all files.
 Reads and processes a directory of raw Lotek TXT files exported by the WHS
 Host batch conversion tool. Each file is processed using
 \code{process_single_raw()}, and the work is parallelized across multiple CPU
-cores so that multiple raw files can be handled simultaneously.
+cores with the \pkg{future}/\pkg{furrr} framework so that multiple raw files
+can be handled simultaneously. Constant arguments are passed explicitly to
+each worker, so no manual \code{clusterExport()} is required.
 }

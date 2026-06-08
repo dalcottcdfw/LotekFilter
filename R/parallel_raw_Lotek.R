@@ -60,7 +60,7 @@ parallel_raw_Lotek <- function(
   # care about the side effect of writing the CSVs, not any return value.
   furrr::future_walk(
     .x                = raw_files,
-    .f                = LotekFilter::process_single_raw,
+    .f                = process_single_raw,
     input_path        = input_dir_norm,
     output_path       = output_dir_norm,
     output_prefix     = output_prefix,

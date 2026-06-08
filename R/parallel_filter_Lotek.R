@@ -102,11 +102,10 @@ parallel_filter_Lotek <- function(input_files,
   on.exit(future::plan(future::sequential), add = TRUE)
 
   # ---- Parallel processing ----
-  results <- future_map(
+  results <- furrr::future_map(
     input_files,
     .f = process_single_file,
     settings = settings,
-    keep_rejected = keep_rejected,
     .options = furrr::furrr_options(
       packages = c("LotekFilter", "dplyr", "readr")
     )
