@@ -28,7 +28,7 @@ process_single_file <- function(filepath,
 
     Lotek_input_file <- readr::read_csv(filepath, show_col_types = FALSE)
 
-    result <- all_filter_steps(Lotek_input_file,
+    result <- LotekFilter::all_filter_steps(Lotek_input_file,
                                settings = settings        # pass settings on
                                )
 

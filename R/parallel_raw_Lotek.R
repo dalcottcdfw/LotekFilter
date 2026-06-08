@@ -55,11 +55,12 @@ parallel_raw_Lotek <- function(
       "tz",
       "process_single_raw"
     ),
-    envir = environment()
+    envir = sys.frame() # import arugment values from session environment (not package environment)
   )
 
   # Load required packages in each worker
   parallel::clusterEvalQ(cl, {
+    library(LotekFilter)
     library(dplyr)
     library(readr)
     library(broman)
@@ -70,7 +71,7 @@ parallel_raw_Lotek <- function(
   pbapply::pblapply(
     X = raw_files,
     FUN = function(f) {
-      process_single_raw(
+      LotekFilter::process_single_raw(
         raw_file = f,
         input_path = input_path,
         output_path = output_path,
