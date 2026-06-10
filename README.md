@@ -7,9 +7,10 @@
 
 <!-- badges: end -->
 
-The goal of LotekFilter is to process and filter JSATS detection files
-from Lotek JSATS receivers. Lotek JSATS receivers record .JST files,
-which must be converted to .TXT files using Lotek’s WHS Host software.
+The goal of the LotekFilter R package is to process and filter JSATS
+acoustic telemetry detection files from Lotek JSATS receivers. Lotek
+JSATS receivers record .JST files, which must be converted to .TXT files
+using Lotek’s WHS Host software’s ‘Batch data to text conversion’ tool.
 The LotekFilter package is designed to accept .TXT files exported from
 WHS and reformat them to a computationally friendy format. The
 processing step extracts detection records from the mixed-data files and
@@ -47,9 +48,11 @@ vignette for more detailed examples.
 library(LotekFilter)
 ## Step 1 - Process raw text files:
 tags <- read.csv("my_allowable_tag_codes.csv") # contains a column of allowable tag codes
+output_dir = "C:/path/to/store/processed/outputs"
+
 parallel_raw_Lotek(input_path = "C:/path/to/input/files",
-                   raw_files = list.files("C:/path/to/input/files", pattern = "\\.TXT$"), # assumes all .TXT files in input_path are to be processed
-                   output_path = "C:/path/to/store/processed/outputs",
+                   raw_files = list.files("C:/path/to/input/files", pattern = "\\.TXT$"), 
+                   output_path = output_dir,
                    output_prefix = "Processed_", # optional prefix to add to processed files
                    allowable_tagcodes = tags$TagID_Hex, # optional but recommended: pre-filter on set of allowable tag codes
                    tz = "Etc/GMT+8", # time zone that detections were recorded in
@@ -57,11 +60,12 @@ parallel_raw_Lotek(input_path = "C:/path/to/input/files",
 
 ## Step 2 - Filter false-positives:
 tags <- read.csv("my_tag_PRIs.csv") # contains a column of hexidecimal format tag codes and a column of the tag's pulse rate interval
-parallel_filter_Lotek(
+
+results_summary <- parallel_filter_Lotek(
   input_files = list.files(pattern = ".csv"),
   input_prefix = "Processed_", # if the input files have a prefix that you want to remove when saving the output ("Processed_..." , "raw_...")
   output_prefix = "Filtered_",
-  output_path = "C:/path/to/store/processed/outputs",
+  output_path = output_dir,
   keep_rejected = FALSE, # TRUE if you want to save a copy of the rejected records with a reason for rejecting
   n_cores      = parallel::detectCores()-2, # number of cores to use for parallel processing (1 input file per core, do not assign all cores)
   
@@ -69,4 +73,12 @@ parallel_filter_Lotek(
   pri_tag_col = "TagID_Hex",          # provide name of hex tag code column in tag lookup table AND
   pri_value_col = "PRI_nominal",        # provide name of column containing tag pulse rate interval in tags lookup table
 )
+results_summary # view summary table of file processing
+
+## Step 3 - combine all filtered files into one dataframe object in R environment
+filtered_files <- list.files(output_dir, pattern = "Filtered_*")
+
+# Read and combine filtered data files
+df <- do.call(rbind, lapply(filtered_files, read.csv))
+# df is a dataframe of all filtered detections in the R environment, ready for data verification and analysis
 ```

@@ -3,23 +3,23 @@ title: "LotekFilter-Recommended"
 author: "Derrick Alcott"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{LotekFilter-Recommended}
+%\VignetteIndexEntry{LotekFilter-Recommended}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
----
-
-```{r setup, include = FALSE}
+  ---
+  
+  ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
-  echo = FALSE,
-  message = FALSE,
-  warning = FALSE,
-  fig.height = 7,
-  fig.width = 7)
+echo = FALSE,
+message = FALSE,
+warning = FALSE,
+fig.height = 7,
+fig.width = 7)
 ```
 This tutorial will describe the recommended and most common usage of the `LotekFilter` package. See 'Advanced Usage' vignette for all package functionality. 
 
 ## Package purpose
-Lotek JSATS receivers generate large, encrypted .JST files. The encrypted .JST files can be converted to accessible .TXT files using Lotek's WHS Host software. However, those text files are not computation-friendly as they contain multiple different data tables in the same file and each dat table is fixed width format. Furthermore, JSATS detection files are often riddled with many false-positive detections, which can lead to very large data files over the course of a single receiver deployment (often >1 million records per receiver). The purpose of the `LotekFilter` package is to efficiently convert the data files produced by WHS Host software into a nearly ready-for-analysis, user-friendly condition. Note: JSATS detections will always need careful quality control checks before inference. 
+Lotek JSATS receivers generate large, encrypted .JST files. The encrypted .JST files can be converted to accessible .TXT files using Lotek's WHS Host software. The LotekFilter package was created based on TXT files exported by WHS Host V1.9.4817.2 (March 17, 2023) using Tools -> 'Batch data to text conversion'. Those text files are not computation-friendly as they contain multiple different data tables in the same file and each data table is fixed width format. Furthermore, JSATS detection files are often riddled with many false-positive detections, which can lead to very large data files over the course of a single receiver deployment (often >1 million records per receiver). The purpose of the `LotekFilter` package is to efficiently convert the data files produced by WHS Host software into a nearly ready-for-analysis, user-friendly condition. Note: JSATS detections will always need careful quality control checks before inference. 
 
 ## Install
 To install `LotekFilter` package directly from GitHub:
@@ -92,9 +92,9 @@ parallel_filter_Lotek(
   input_prefix = "Processed_", # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
   output_prefix = "Filtered_",
   output_path = output_dir,
-
+  
   n_cores    = 2, # number of cores to use for parallel processing (1 input file per core)
-
+  
   pri_table = tags,            # provide name of tag pri lookup table AND
   pri_tag_col = "TagID_Hex",          # provide name of hex tag code column in tag lookup table AND
   pri_value_col = "PRI_nominal",        # provide name of column containing tag pulse rate interval in tags lookup table

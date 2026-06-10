@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
   fig.height = 7,
   fig.width = 7)
 ```
-This tutorial will cover the details of the filter criteria and alternative ways to utilize the package functions. See 'Recommended Usage' vignette for basic usage instructions. 
+This tutorial will cover the details of the filter criteria and alternative ways to utilize the package functions. See 'Recommended Usage' vignette for basic usage instructions. The LotekFilter package was created based on TXT files exported by WHS Host V1.9.4817.2 (March 17, 2023) using Tools -> 'Batch data to text conversion'. 
 
 ## Install
 To install `LotekFilter` package directly from GitHub:
@@ -32,11 +32,15 @@ Filter steps:
   b. difference between observed pulse rate and nominal pulse rate muse be <'nominalPRI_threshold' (default: 0.20 or 20%)
   c. standard deviation of calculated pulse rate from 3 consecutive detections must be <'sd_threshold' (default: 0.025)
   
-The first filtering step is filtering to only allow known tag codes. This is not strictly required if it is possible that unknown tag codes may be detected. However, filtering to only allow known tag codes has the largest reduction on file size and takes place at the beginning of the pipeline, resulting in dramatic performance improvements.
+The first filtering step is filtering to only allow known tag codes. This is not strictly required if it is possible that unknown tag codes may be detected. However, filtering to only allow known tag codes has the largest reduction on file size and takes place at the beginning of the pipeline, resulting in dramatic performance improvements. If your tag list is in decimal format instead of the required hexidecimal format, the dec2hex() function from the broman package can convert decimal format codes to hexidecimal. The converted codes will need to be forced to uppercase for proper matching.
+```{r code conversion, eval = FALSE}
+HexCodes <- toupper(broman::dec2hex(DecimalCodes)) # example conversion of decimal codes to hexidecimal.
+```
+
 
 The next step is to remove multipath detections. These are detections of the same tag code within a very short amount of time of each other. By default, 0.3 seconds is used as the threshold. All records of a tag within 0.3 seconds of the same tag on the same receiver will be removed as a multipath detection. This prevents multipath detections from interfering with the PRI filter assessment. 
 
-The default PRI filter criteria are derived from criteria used by Arnold Ammann for use in California's Central Valley JSATS telemetry database hosted on NOAA's ERDDAP server. These filter criteria have been tuned for Lotek receivers specifically and perform fairly well at removing false-positive records without removing too many true-positives. Some false-positives are expected after filtering. Additional filter criteria such as reasonable movement constraints, expected tag life expectancy, and known receiver deployment periods will likely be necessary. A given PRI filter criterion could be effectively removed by making the parameter extremely tolerant. For example, if you do not want to use the standard deviation of calculated pulse rate criterion, 'sd_threshold' can be set to a very large value (e.g. 999999999). Reducing min_detections to <3 will likely result in a very large number of false-positives retained in the final data after filtering. 
+The default PRI filter criteria are derived from criteria used by Arnold Ammann for use in California's Central Valley JSATS telemetry database hosted on NOAA's ERDDAP server. These filter criteria have been tuned for Lotek receivers specifically and perform fairly well at removing false-positive records without removing too many true-positives. Some false-positives are expected after filtering. Additional filter criteria such as reasonable movement constraints, expected tag life expectancy, and known receiver deployment periods will likely be necessary. A given PRI filter criterion could be effectively removed by making the parameter extremely tolerant. For example, if you do not want to use the standard deviation of calculated pulse rate criterion, 'sd_threshold' can be set to a very large value (e.g. 999999). Reducing min_detections to <3 will likely result in a very large number of false-positives retained in the final data after filtering. 
 
 ## Altering default criteria
 The example below alters several of the default filter criteria and applies a single nominal PRI to all tags. These criteria have not been tested and are shown for example purposes only. 
@@ -59,7 +63,7 @@ result_summary <- parallel_filter_Lotek <- function(input_files,
                                   multipath_threshold = 0.5,  # time threshold for multipath detections. Detections less than this after first are removed. 
                                   nominalPRI_threshold = 0.2 # observed PRI must be within this amount of nominal PRI.
 )
-
+result_summary
 ```
 
 
@@ -104,7 +108,7 @@ settings = list(inputpath = output_dir,
 input_file <- paste(output_dir, sub("\\.TXT$", ".csv", list.files(tmpdir, pattern = ".TXT")[1]), sep = "/")
 process_single_file(filepath = input_file, 
                     settings = settings) 
-
+#quietly exports a filtered csv to the output directory
 
 ```
 
