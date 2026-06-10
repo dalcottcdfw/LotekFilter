@@ -2,35 +2,53 @@
 % Please edit documentation in R/process_single_raw.R
 \name{process_single_raw}
 \alias{process_single_raw}
-\title{process a single raw Lotek .TXT file exported by Lotek's WHS Host
-batch file conversion tool.
-This function takes .TXT files created by WHS Host's batch file conversion tool
-which conversion .JST files from the receiver to unecrypted, usable text files.
-This function reformats the TXT files output why WHS host and optionally
-filters to only keep detections from a list of allowabe tag codes.
-This is recommended as it will greatly reduce file size and thus processing.
-This function and package are designed to be run each input file independently
-in parallel due to the potential large file sizes which can cause memory limitations
-if multiple files are retained in a single R environment.}
+\title{Process a single raw Lotek TXT file exported by WHS Host}
 \usage{
 process_single_raw(
   raw_file,
   input_path,
   output_path,
   output_prefix,
-  AllowableTagCodes,
+  allowable_tagcodes,
   tz
 )
 }
+\arguments{
+\item{raw_file}{Character string giving the name of the input TXT file.}
+
+\item{input_path}{Path to the folder containing \code{raw_file}.}
+
+\item{output_path}{Path where the processed CSV file should be saved.}
+
+\item{output_prefix}{Optional prefix added to the output file name.}
+
+\item{allowable_tagcodes}{Character vector of hexadecimal tag codes to retain,
+or \code{NULL} to keep all tag detections.}
+
+\item{tz}{Character string giving the timezone of the receiver clock.}
+}
+\value{
+Writes a CSV file to \code{output_path}. Returns \code{NULL} (invisible).
+}
 \description{
-process a single raw Lotek .TXT file exported by Lotek's WHS Host
-batch file conversion tool.
-This function takes .TXT files created by WHS Host's batch file conversion tool
-which conversion .JST files from the receiver to unecrypted, usable text files.
-This function reformats the TXT files output why WHS host and optionally
-filters to only keep detections from a list of allowabe tag codes.
-This is recommended as it will greatly reduce file size and thus processing.
-This function and package are designed to be run each input file independently
-in parallel due to the potential large file sizes which can cause memory limitations
-if multiple files are retained in a single R environment.
+Processes a single .TXT file produced by Lotek's WHS Host batch conversion
+tool. These files are converted from encrypted .JST receiver files into
+human-readable text. This function reformats the content, converts tag IDs,
+optionally filters to a set of allowable tag codes, and writes a cleaned CSV
+to disk. Because these files may be large, this function is intended to be
+run independently for each input file (and can be parallelized).
+}
+\examples{
+\dontrun{
+raw_file <- "Example_Lotek_Raw.TXT"
+process_single_raw(
+  raw_file = raw_file,
+  input_path = system.file("extdata", package = "LotekFilter"),
+  output_path = tempdir(),
+  output_prefix = "Processed_",
+  allowable_tagcodes = c("1A2C"),
+  tz = "Etc/GMT+8"
+)
+}
+
 }

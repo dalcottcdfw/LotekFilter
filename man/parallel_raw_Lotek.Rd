@@ -9,38 +9,60 @@ parallel_raw_Lotek(
   raw_files = list.files(input_path, pattern = "\\\\.TXT$", ignore.case = TRUE),
   output_path,
   output_prefix = "",
-  AllowableTagCodes = NULL,
+  allowable_tagcodes = NULL,
   tz = "Etc/GMT+8",
   n_cores = max(1, round(parallel::detectCores()/2))
 )
 }
 \arguments{
-\item{input_path}{Path to directory containing raw \code{.TXT} files.}
+\item{input_path}{Path to the directory containing raw \code{.TXT} files.}
 
-\item{raw_files}{Character vector of TXT filenames to process. Defaults to
-all \code{.TXT} files in the directory.}
+\item{raw_files}{Character vector of \code{.TXT} filenames to process. Defaults to
+all \code{.TXT} files in \code{input_path} (case-insensitive).}
 
-\item{output_path}{Directory where processed CSV files will be written.}
+\item{output_path}{Directory where processed csv files will be written.
+Created if it does not already exist.}
 
-\item{output_prefix}{Optional prefix to add to output filenames.}
+\item{output_prefix}{Optional prefix added to the output csv filenames.}
 
-\item{AllowableTagCodes}{Optional vector of tag IDs to allow and remove all
-others. This is highly recommended whenever possible. It greatly increases
-processing speed and decreases file size and resource requirements.}
+\item{allowable_tagcodes}{Optional vector of hexadecimal tag IDs to retain.
+Records with tag IDs not present in this vector are removed. Highly
+recommended to reduce file size and increase processing speed.}
 
-\item{tz}{Character; timezone for timestamp parsing (default \code{"Etc/GMT+8"}).}
+\item{tz}{Character string giving the timezone used for timestamp parsing.
+Defaults to \code{"Etc/GMT+8"}.}
 
-\item{n_cores}{Number of CPU cores (future workers) to use for parallel
-processing.}
+\item{n_cores}{Number of CPU cores to use for parallel processing.
+Default is half the available cores (rounded to whole number).}
 }
 \value{
-Invisibly returns \code{TRUE} after processing all files.
+Invisibly returns \code{TRUE} after all raw files are processed.
+Writes one processed csv per input file into \code{output_path}.
 }
 \description{
-Reads and processes a directory of raw Lotek TXT files exported by the WHS
-Host batch conversion tool. Each file is processed using
-\code{process_single_raw()}, and the work is parallelized across multiple CPU
-cores with the \pkg{future}/\pkg{furrr} framework so that multiple raw files
-can be handled simultaneously. Constant arguments are passed explicitly to
-each worker, so no manual \code{clusterExport()} is required.
+Reads and processes a directory of raw Lotek \code{.TXT} files exported by the
+WHS Host batch conversion tool. Each file is passed to
+\code{\link[=process_single_raw]{process_single_raw()}} and processed independently. Parallelization is
+performed through the \pkg{future}/\pkg{furrr} framework, allowing multiple
+raw files to be handled simultaneously. All required arguments are
+forwarded to worker processes explicitly.
+
+Input \code{.TXT} files must be unencrypted WHS Host exports containing standard
+Lotek receiver message blocks and detection tables.
+}
+\examples{
+\dontrun{
+# Example directory containing raw TXT files
+raw_dir <- system.file("extdata", package = "LotekFilter")
+
+parallel_raw_Lotek(
+  input_path   = raw_dir,
+  output_path  = tempdir(),
+  output_prefix = "Processed_",
+  allowable_tagcodes = c("1A2B", "4D5E"),
+  tz = "Etc/GMT+8",
+  n_cores = 2
+)
+}
+
 }

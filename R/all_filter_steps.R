@@ -1,12 +1,18 @@
+#' Broad filter function
+#'
+#' @description
 #' This function performs all of the steps involved in filtering false-positive
 #' detections from a Lotek JSATS receiver. The first few simpler filter steps
 #' are coded directly in this function (e.g. multipath, minimum number of detections).
 #' Then this function calls pri_filter() which performs the complex filter based
 #' on the nominalPRI of the tag.
 #'
-
-### Broad filter function
-# uses pri_filter()
+#' @param Lotek_input_file a reformatted Lotek detections file previously processed by parallel_raw_Lotek() or process_single_raw()
+#' @param settings a list of filter settings passed from parallel_filter_Lotek()
+#'
+#' @importFrom dplyr mutate filter arrange group_by ungroup select lag summarise n left_join bind_rows all_of
+#'
+#' @returns a filtered dataframe with all filter criteria applied
 all_filter_steps <- function(Lotek_input_file,
                              settings = settings) {
 

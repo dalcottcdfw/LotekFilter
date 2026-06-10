@@ -2,18 +2,57 @@
 % Please edit documentation in R/process_single_file.R
 \name{process_single_file}
 \alias{process_single_file}
-\title{This function reads, formats, and calls necessary filter functions to fully
-process a single csv file that was exported by parallel_raw_Lotek() or
-process_single_raw(). This is the function that parallel_filter_Lotek()
-parallelizes to increase processing speed. This function calls multiple
-helper functions which actually execute the filter criteria.}
+\title{Process a single Lotek detection csv file}
 \usage{
 process_single_file(filepath, settings = settings)
 }
+\arguments{
+\item{filepath}{Path to the input csv file.}
+
+\item{settings}{A named list of filter settings created within
+\code{\link[=parallel_filter_Lotek]{parallel_filter_Lotek()}}. Must include \code{output_path}, \code{input_prefix},
+\code{output_prefix}, and all filtering thresholds.}
+}
+\value{
+A one-row tibble summarizing:
+\itemize{
+\item input filename
+\item output filename
+\item number of detections before and after filtering
+\item number rejected
+\item status (“success” or “failed”)
+\item any error message
+}
+
+The cleaned detection csv is written to the output directory as a side
+effect.
+}
 \description{
-This function reads, formats, and calls necessary filter functions to fully
-process a single csv file that was exported by parallel_raw_Lotek() or
-process_single_raw(). This is the function that parallel_filter_Lotek()
-parallelizes to increase processing speed. This function calls multiple
-helper functions which actually execute the filter criteria.
+Processes a single reformatted Lotek detection csv file produced by
+\code{\link[=parallel_raw_Lotek]{parallel_raw_Lotek()}} or \code{\link[=process_single_raw]{process_single_raw()}}. This function applies all
+filtering steps via \code{\link[=all_filter_steps]{all_filter_steps()}}, writes the cleaned output file, and
+returns a one-row summary tibble describing the results. It is primarily
+intended to support \code{\link[=parallel_filter_Lotek]{parallel_filter_Lotek()}}, but can also be used
+independently when processing a single file.
+
+The input csv must contain (at minimum) the fields expected by
+\code{\link[=all_filter_steps]{all_filter_steps()}}, typically including \code{DateTime}, \code{HexID}, and any fields
+used for PRI or multipath filtering.
+}
+\examples{
+\dontrun{
+# Example single-file processing
+f <- system.file("extdata", "Example_Lotek_Processed.csv",
+                 package = "LotekFilter")
+
+settings <- list(
+  output_path   = tempdir(),
+  input_prefix  = "",
+  output_prefix = "Filtered_",
+  keep_rejected = FALSE
+)
+
+process_single_file(f, settings = settings)
+}
+
 }

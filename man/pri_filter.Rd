@@ -2,17 +2,20 @@
 % Please edit documentation in R/pri_filter.R
 \name{pri_filter}
 \alias{pri_filter}
-\title{This function filters the detection records based on the nominalPRI of the tag.
-It searches for min_dets detections within a time window of nominalPRI * detection_window seconds.
-The function considers all combinations of min_dets that may occur within the
-time window to see if any of them pass the filter criteria. This is done
-to avoid a false-positive inside a set of true-positive detections from
-causing a violation (such as PRI standard deviation)}
+\title{Execute the PRI filter}
 \usage{
 pri_filter(dets_df, settings = settings)
 }
+\arguments{
+\item{dets_df}{a dataframe containing JSATS detections.}
+
+\item{settings}{a list of filter settings inherited from parallel_filter_Lotek()}
+}
+\value{
+a list containing detections that passed the pri filter and optionally a list of detections that did not
+}
 \description{
-This function filters the detection records based on the nominalPRI of the tag.
+#' This function filters the detection records based on the nominalPRI of the tag.
 It searches for min_dets detections within a time window of nominalPRI * detection_window seconds.
 The function considers all combinations of min_dets that may occur within the
 time window to see if any of them pass the filter criteria. This is done

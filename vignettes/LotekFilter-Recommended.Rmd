@@ -1,0 +1,112 @@
+---
+title: "LotekFilter-Recommended"
+author: "Derrick Alcott"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{LotekFilter-Recommended}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.height = 7,
+  fig.width = 7)
+```
+This tutorial will describe the recommended and most common usage of the `LotekFilter` package. See 'Advanced Usage' vignette for all package functionality. 
+
+## Package purpose
+Lotek JSATS receivers generate large, encrypted .JST files. The encrypted .JST files can be converted to accessible .TXT files using Lotek's WHS Host software. However, those text files are not computation-friendly as they contain multiple different data tables in the same file and each dat table is fixed width format. Furthermore, JSATS detection files are often riddled with many false-positive detections, which can lead to very large data files over the course of a single receiver deployment (often >1 million records per receiver). The purpose of the `LotekFilter` package is to efficiently convert the data files produced by WHS Host software into a nearly ready-for-analysis, user-friendly condition. Note: JSATS detections will always need careful quality control checks before inference. 
+
+## Install
+To install `LotekFilter` package directly from GitHub:
+```{r install, echo=TRUE, eval=TRUE}
+devtools::install_github("dalcottcdfw/LotekFilter") # install from GitHub
+```
+
+## Example workflow
+Here's a quick example workflow of how the package was designed to function in most cases:
+```{r workflow, echo=TRUE, eval=FALSE}
+library(LotekFilter)
+input_dir <- "C:/Documents/jsats_study/data_raw/" # location where input files are stored
+my_files <- list.files(input_dir, pattern = "\\.TXT$") # choose all text files in the input directory as the input files
+output_dir<- "C:/Documents/jsats_study/data/" # location to save the processed output files
+allowable_tags <- read.csv("C:/Documents/jsats_study/data/my_allowable_tag_codes.csv") # read in a list of allowable tag codes with their PRI
+
+# Step 1 - Process raw files
+parallel_raw_Lotek(input_path = input_dir,
+                   raw_files = list.files(input_dir, pattern = "\\.TXT$"), # assumes all .TXT files in input_path are to be processed
+                   output_path = output_dir,
+                   allowable_tagcodes = allowable_tags$TagID_Hex, # optional but recommended: pre-filter on set of allowable tag codes
+                   tz = "Etc/GMT+8", # time zone that detections were recorded in
+                   n_cores = parallel::detectCores()-2) # number of computer cores to use (always reserve at least 1 unused core)
+
+
+## Step 2 - Filter false-positives:
+setwd("C:/Documents/jsats_study/data/") # set the working directory to the location where the pre-processed csv files are stored
+parallel_filter_Lotek(
+  input_files = list.files(pattern = ".csv"),
+  output_prefix = "Filtered_",
+  output_path = "C:/Documents/jsats_study/data/", # store filtered files in the same location. inputs will not be overwritten because of file prefix
+  keep_rejected = FALSE, # TRUE if you want to save a copy of the rejected records with a reason for rejecting
+  n_cores    = n_cores = parallel::detectCores()-2, # number of cores to use for parallel processing (1 input file per core, do not assign all cores)
+  
+  pri_table = allowable_tags,            # provide name of tag pri lookup table AND
+  pri_tag_col = "TagID_Hex",          # provide name of hex tag code column in tag lookup table AND
+  pri_value_col = "PRI_nominal",        # provide name of column containing tag pulse rate interval in tags lookup table
+  
+)
+```
+
+## Functional example using provided data
+This is a functional example that uses example data files provided with the package download. 
+```{r echo=TRUE, eval=FALSE}
+library(LotekFilter)
+output_dir <- "C:/Desktop/path/to/store/outputs" # change to your preferred output storage location
+
+tags <- read.csv(paste(file.path(system.file("extdata", package = "LotekFilter"), "example_tagcodes.csv"), sep = "/"))# read in example tag codes data
+
+# unzip the zipped detections data
+zip_path <- system.file("extdata", "ExampleDetectionsFiles.zip", package = "LotekFilter")
+tmpdir <- tempdir()
+unzip(zip_path, exdir = tmpdir)
+list.files(tmpdir, pattern = ".TXT") # check that the detection test files are in the zip folder, should contain two "WHS4k..."files
+
+# Step 1 - process raw files
+parallel_raw_Lotek(input_path = tmpdir,
+                   raw_files = list.files(tmpdir, pattern = "\\.TXT$"),
+                   output_path = output_dir,
+                   output_prefix = "Processed_",
+                   allowable_tagcodes = tags$TagID_Hex,
+                   tz = "Etc/GMT+8",
+                   n_cores = 2)
+
+
+# Step 2 - filter out false-positive detections
+setwd(output_dir) # set directory to location where processed files are stored
+parallel_filter_Lotek(
+  input_files = list.files(pattern = ".csv"),
+  input_prefix = "Processed_", # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
+  output_prefix = "Filtered_",
+  output_path = output_dir,
+
+  n_cores    = 2, # number of cores to use for parallel processing (1 input file per core)
+
+  pri_table = tags,            # provide name of tag pri lookup table AND
+  pri_tag_col = "TagID_Hex",          # provide name of hex tag code column in tag lookup table AND
+  pri_value_col = "PRI_nominal",        # provide name of column containing tag pulse rate interval in tags lookup table
+)
+
+# Step 3 - combine all filtered files into one dataframe object in R environment
+filtered_files <- list.files(output_dir, pattern = "Filtered_*")
+
+# Read and combine
+df <- do.call(rbind, lapply(filtered_files, read.csv))
+```
+It is highly recommended to use a vector of allowable tag codes to filter the raw detections data as early as possible. This will greatly speed up the rest of the process. However, it is possible to skip this step.
+These examples use default filter criteria which are based on the filter parameters applied by Arnold Ammann for use in the California Central Valley JSATS telemetry database hosted on NOAA's ERDDAP server (see [Ammann 2020; Environ Biol Fish](https://www.bing.com/ck/a?!&&p=4baefa46e97731d3f46eff5438ead5170f8a92604b70a181db6faf9d2092c5f4JmltdHM9MTc4MDk2MzIwMA&ptn=3&ver=2&hsh=4&fclid=2870c1ec-3641-6797-2db0-d5f537c566a5&psq=United+States+Bureau+of+Reclamation+Interagency+Agreement+%22R18PG00009%22&u=a1aHR0cHM6Ly9yZXBvc2l0b3J5LmxpYnJhcnkubm9hYS5nb3Yvdmlldy9ub2FhLzY4MTY1L25vYWFfNjgxNjVfRFMxLnBkZg)). For details on filter criteria and alternative uses of `LotekFilter` functions, see the vignette 'Advanced Usage'.
+
+

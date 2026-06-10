@@ -1,10 +1,20 @@
-#' This function filters the detection records based on the nominalPRI of the tag.
+#' Execute the PRI filter
+#'
+#' @description
+#' #' This function filters the detection records based on the nominalPRI of the tag.
 #' It searches for min_dets detections within a time window of nominalPRI * detection_window seconds.
 #' The function considers all combinations of min_dets that may occur within the
 #' time window to see if any of them pass the filter criteria. This is done
 #' to avoid a false-positive inside a set of true-positive detections from
 #' causing a violation (such as PRI standard deviation)
-
+#'
+#' @param dets_df a dataframe containing JSATS detections.
+#' @param settings a list of filter settings inherited from parallel_filter_Lotek()
+#'
+#' @return a list containing detections that passed the pri filter and optionally a list of detections that did not
+#'
+#' @importFrom dplyr mutate select left_join
+#' @importFrom rlang sym
 pri_filter <- function(dets_df,
                        settings = settings
 ) {

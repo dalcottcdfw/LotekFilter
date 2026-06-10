@@ -1,34 +1,72 @@
-#' Filter multiple Lotek detection CSV files in parallel
+#' Filter multiple Lotek detection files in parallel
 #'
 #' @description
-#' This function processes and filters multiple detection CSV files that were
-#' pre-processed by `parallel_raw_Lotek()` or `process_single_raw()`. Users may
-#' also manually reformat files to match the required format (columns:
-#' `DateTime`, `HexID`, `nominalPRI`). This is the main high-level function that
-#' coordinates multiple helper functions to apply all filter criteria in
-#' parallel. Internally, `parallel_filter_Lotek()` parallelizes the work that
-#' is done by `process_single_file()` on each input file.
+#' Processes and filters multiple Lotek detection csv files in parallel. These
+#' input files must contain at minimum the columns `DateTime`, `HexID`, and
+#' `nominalPRI`, and are typically created by
+#' [process_single_raw()] or [parallel_raw_Lotek()]. The function coordinates
+#' parallel processing across available CPU cores and applies all Lotek
+#' detection filtering criteria, optionally saving rejected detections and
+#' producing a combined summary dataframe.
 #'
-#' @param input_files Character vector of CSV file paths to process.
-#' @param input_prefix Optional prefix used on input file names.
-#' @param output_prefix Prefix to add to output files (default "Filtered_").
-#' @param output_path Directory where output files will be written.
-#' @param allow_overwrite Logical; whether to allow overwriting input files.
-#' @param keep_rejected Logical; whether to save a file containing rejected
-#'   detections and the reason for rejection.
-#' @param n_cores Number of cores to use for parallel processing.
-#' @param nominalPRI Optional numeric pulse rate interval applied to all tags.
-#' @param pri_table Optional lookup table for tag PRI values.
-#' @param pri_tag_col Name of column containing tag hex IDs (if using pri_table).
-#' @param pri_value_col Name of column containing PRI values (if using pri_table).
-#' @param detection_window Multiplier used to evaluate PRI timing criteria.
-#' @param min_detections Minimum number of detections needed within the window.
+#' @param input_files Character vector of csv file paths to process.
+#' @param input_prefix Optional prefix used on input file names (to remove when
+#'   constructing output names). Use `NA` to ignore.
+#' @param output_prefix Prefix to prepend to all output filenames. Default is
+#'   `"Filtered_"`.
+#' @param output_path Directory where output files will be written. If the
+#'   directory does not exist, it will be created.
+#' @param allow_overwrite Logical; if `FALSE` (default), prevents accidental
+#'   overwriting when input and output directories are the same and filename
+#'   prefixes are ambiguous.
+#' @param keep_rejected Logical; if `TRUE`, saves an additional csv per input
+#'   file containing all rejected detections and their rejection reason.
+#' @param n_cores Number of CPU cores to use for parallel processing. Defaults
+#'   to half of the available cores.
+#'
+#' @param nominalPRI Optional numeric value giving a single nominal pulse rate
+#'   interval (PRI) applied to all tags.
+#' @param pri_table Optional dataframe providing tag-specific PRI values.
+#' @param pri_tag_col Name of the column in `pri_table` containing hex tag IDs.
+#' @param pri_value_col Name of the column in `pri_table` containing PRI values.
+#'
+#' @param detection_window Multiplier used to define the time window in which
+#'   `min_detections` must occur. Default is 16.6 (Lotek standard).
+#' @param min_detections Minimum number of detections required within the PRI
+#'   window to retain a detection sequence. Default is 4.
 #' @param sd_threshold Maximum allowable standard deviation of observed PRI.
-#' @param multipath_threshold Time threshold for multipath detection filtering.
-#' @param nominalPRI_threshold Proportion threshold for PRI deviation.
+#'   Default is 0.025.
+#' @param multipath_threshold Time threshold (in seconds) used to remove
+#'   detections suspected to be multipath reflections. Default is 0.3.
+#' @param nominalPRI_threshold Proportion threshold used to evaluate deviation
+#'   from nominal PRI. Default is 0.20 (20%).
 #'
-#' @return A summary dataframe produced by combining the results of processing
-#'   each input CSV file.
+#' @return
+#' A dataframe combining the summary results from all processed files. The
+#' function also writes filtered csv files (and optionally rejected-detection
+#' files) to `output_path`. The returned dataframe is also printed and returned
+#' invisibly.
+#'
+#' @importFrom future plan multisession sequential
+#' @importFrom furrr future_map furrr_options
+#' @importFrom dplyr bind_rows
+#'
+#' @examples
+#' \dontrun{
+#' input_files <- list.files(
+#'   system.file("extdata", package = "LotekFilter"),
+#'   pattern = "Processed_.*\\.csv$",
+#'   full.names = TRUE
+#' )
+#'
+#' summary_results <- parallel_filter_Lotek(
+#'   input_files   = input_files,
+#'   output_path   = tempdir(),
+#'   output_prefix = "Filtered_",
+#'   keep_rejected = FALSE,
+#'   n_cores       = 2
+#' )
+#' }
 #'
 #' @export
 parallel_filter_Lotek <- function(input_files,

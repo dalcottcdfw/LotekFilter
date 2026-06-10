@@ -1,0 +1,110 @@
+---
+title: "LotekFilter-Advanced"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{LotekFilter-Advanced}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.height = 7,
+  fig.width = 7)
+```
+This tutorial will cover the details of the filter criteria and alternative ways to utilize the package functions. See 'Recommended Usage' vignette for basic usage instructions. 
+
+## Install
+To install `LotekFilter` package directly from GitHub:
+```{r install, echo=TRUE, eval=TRUE}
+devtools::install_github("dalcottcdfw/LotekFilter") # install from GitHub
+```
+
+## Filtering Process
+Filter steps:
+1. Allowable tag codes only (optional)
+2. Remove multipath detections (i.e. multiple records of the same code within fractions of a second of one another) 
+3. Pulse Rate Interval filter (per tag code)
+  a. at least 'min_detections' detections within 'detection_window'-fold of the nominal PRI in seconds (default: 4 detections within 16.6-fold of nominal PRI)
+  b. difference between observed pulse rate and nominal pulse rate muse be <'nominalPRI_threshold' (default: 0.20 or 20%)
+  c. standard deviation of calculated pulse rate from 3 consecutive detections must be <'sd_threshold' (default: 0.025)
+  
+The first filtering step is filtering to only allow known tag codes. This is not strictly required if it is possible that unknown tag codes may be detected. However, filtering to only allow known tag codes has the largest reduction on file size and takes place at the beginning of the pipeline, resulting in dramatic performance improvements.
+
+The next step is to remove multipath detections. These are detections of the same tag code within a very short amount of time of each other. By default, 0.3 seconds is used as the threshold. All records of a tag within 0.3 seconds of the same tag on the same receiver will be removed as a multipath detection. This prevents multipath detections from interfering with the PRI filter assessment. 
+
+The default PRI filter criteria are derived from criteria used by Arnold Ammann for use in California's Central Valley JSATS telemetry database hosted on NOAA's ERDDAP server. These filter criteria have been tuned for Lotek receivers specifically and perform fairly well at removing false-positive records without removing too many true-positives. Some false-positives are expected after filtering. Additional filter criteria such as reasonable movement constraints, expected tag life expectancy, and known receiver deployment periods will likely be necessary. A given PRI filter criterion could be effectively removed by making the parameter extremely tolerant. For example, if you do not want to use the standard deviation of calculated pulse rate criterion, 'sd_threshold' can be set to a very large value (e.g. 999999999). Reducing min_detections to <3 will likely result in a very large number of false-positives retained in the final data after filtering. 
+
+## Altering default criteria
+The example below alters several of the default filter criteria and applies a single nominal PRI to all tags. These criteria have not been tested and are shown for example purposes only. 
+```{r new criteria}
+library(LotekFilter)
+input_files <- list.files(pattern = "Processed_*")
+output_path <- "C:/Documents/jsats_study/data/"
+result_summary <- parallel_filter_Lotek <- function(input_files,
+                                  input_prefix = "Processed_", 
+                                  output_prefix = "Filtered_",
+                                  output_path = output_path,
+                                  
+                                  keep_rejected = TRUE, # TRUE if you want to save a copy of the rejected records with a reason for rejecting
+                                  n_cores    = min(length(input_files), 
+                                                   parallel::detectCores()-2), # 2 cores less than all available or number of files, whatever is smaller
+                                  nominalPRI = 5,           # provide a single numeric tag pulse rate interval to all tags
+                                  detection_window = 19,    # detection_window * nominmal PRI = time window that min_detections must occur to be kept
+                                  min_detections = 5,         # number of detections required within the detection window to be kept.
+                                  sd_threshold = 99999,           # max threshold for standard deviation of observed PRI
+                                  multipath_threshold = 0.5,  # time threshold for multipath detections. Detections less than this after first are removed. 
+                                  nominalPRI_threshold = 0.2 # observed PRI must be within this amount of nominal PRI.
+)
+
+```
+
+
+## Alternate use cases: Single file
+The LotekFilter package was designed to process batches of raw Lotek TXT files efficienctly. It is possible to use the parallel functions with only a single file. This will attempt to use furrr and future to map parallel processing, but only one core will be assigned. However, it is also possible to bypass the parallel functions and apply the single file functions to a single file. In order to run a single file this way, you must specify all filter criteria as arguments in the function call. This is an example of processing then filtering a single file:
+```{r single file}
+library(LotekFilter)
+tags <- read.csv(paste(file.path(system.file("extdata", package = "LotekFilter"), "example_tagcodes.csv"), sep = "/"))# read in example tag codes 
+# unzip the zipped detections data
+zip_path <- system.file("extdata", "ExampleDetectionsFiles.zip", package = "LotekFilter")
+tmpdir <- tempdir()
+unzip(zip_path, exdir = tmpdir)
+list.files(tmpdir, pattern = ".TXT") # check that the detection test files are in the zip folder, should contain two "WHS4k..."files
+output_dir = system.file("extdata", package = "LotekFilter")
+
+
+# Convert a single raw Lotek file to csv
+process_single_raw(raw_file = list.files(tmpdir, pattern = ".TXT")[1], # first example file from package extdata
+                               input_path = tmpdir, # temporary directory for zip file contents (change as needed)
+                               output_path = output_dir,
+                               output_prefix = "",
+                               allowable_tagcodes = tags$TagID_Hex,
+                               tz = "Etc/GMT+8")
+
+
+# False-positive filter a single Lotek file
+settings = list(inputpath = output_dir,
+                output_path = output_dir,
+                input_prefix = "WHS4k-",
+                output_prefix = "Filtered_",
+                
+                # if running single file: must specify all filter criteria
+                nominalPRI = 5,
+                detection_window = 16.6,    
+                min_detections = 4,
+                sd_threshold = 0.025,
+                multipath_threshold = 0.3,
+                nominalPRI_threshold = 0.2,
+                
+                keep_rejected = FALSE)
+
+input_file <- paste(output_dir, sub("\\.TXT$", ".csv", list.files(tmpdir, pattern = ".TXT")[1]), sep = "/")
+process_single_file(filepath = input_file, 
+                    settings = settings) 
+
+
+```
+

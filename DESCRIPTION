@@ -1,13 +1,24 @@
 Package: LotekFilter
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Filter and Process Raw Lotek JSATS Files
+Version: 0.0.1
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Derrick", "Alcott", , "derrick.alcott@wildlife.ca.gov", role = c("aut", "cre"))
+Description: Processes, reformats, and removes false-positive detections from Lotek JSATS acoustic telemetry receivers. Designed to process multiple files in parallel using multiple CPU cores to increase processing efficiency.
+License: MIT + file LICENSE
+Depends: R (>= 4.1.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0
 URL: https://github.com/dalcottcdfw/LotekFilter
 BugReports: https://github.com/dalcottcdfw/LotekFilter/issues
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Imports: 
+    broman,
+    dplyr,
+    furrr,
+    future,
+    readr,
+    rlang

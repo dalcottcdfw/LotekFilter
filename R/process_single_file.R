@@ -1,9 +1,54 @@
-#' This function reads, formats, and calls necessary filter functions to fully
-#' process a single csv file that was exported by parallel_raw_Lotek() or
-#' process_single_raw(). This is the function that parallel_filter_Lotek()
-#' parallelizes to increase processing speed. This function calls multiple
-#' helper functions which actually execute the filter criteria.
-
+#' Process a single Lotek detection csv file
+#'
+#' @description
+#' Processes a single reformatted Lotek detection csv file produced by
+#' [parallel_raw_Lotek()] or [process_single_raw()]. This function applies all
+#' filtering steps via [all_filter_steps()], writes the cleaned output file, and
+#' returns a one-row summary tibble describing the results. It is primarily
+#' intended to support [parallel_filter_Lotek()], but can also be used
+#' independently when processing a single file.
+#'
+#' The input csv must contain (at minimum) the fields expected by
+#' [all_filter_steps()], typically including `DateTime`, `HexID`, and any fields
+#' used for PRI or multipath filtering.
+#'
+#' @param filepath Path to the input csv file.
+#' @param settings A named list of filter settings created within
+#'   [parallel_filter_Lotek()]. Must include `output_path`, `input_prefix`,
+#'   `output_prefix`, and all filtering thresholds.
+#'
+#' @return
+#' A one-row tibble summarizing:
+#' * input filename
+#' * output filename
+#' * number of detections before and after filtering
+#' * number rejected
+#' * status (“success” or “failed”)
+#' * any error message
+#'
+#' The cleaned detection csv is written to the output directory as a side
+#' effect.
+#'
+#' @importFrom readr read_csv
+#' @importFrom dplyr tibble
+#'
+#' @examples
+#' \dontrun{
+#' # Example single-file processing
+#' f <- system.file("extdata", "Example_Lotek_Processed.csv",
+#'                  package = "LotekFilter")
+#'
+#' settings <- list(
+#'   output_path   = tempdir(),
+#'   input_prefix  = "",
+#'   output_prefix = "Filtered_",
+#'   keep_rejected = FALSE
+#' )
+#'
+#' process_single_file(f, settings = settings)
+#' }
+#'
+#' @export
 process_single_file <- function(filepath,
                                 settings = settings) {
 
