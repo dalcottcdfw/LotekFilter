@@ -17,6 +17,8 @@ knitr::opts_chunk$set(
 ```
 This tutorial will cover the details of the filter criteria and alternative ways to utilize the package functions. See 'Recommended Usage' vignette for basic usage instructions. The LotekFilter package was created based on TXT files exported by WHS Host V1.9.4817.2 (March 17, 2023) using Tools -> 'Batch data to text conversion'. 
 
+While the LotekFilter R package was designed to parallelize the filtering process across multiple input text files, it is possible to execute the parallel_ functions on a single file. If you are multi-tasking on the computer that will be processing the data, it is better to reserve more unused cores (e.g. n_cores = parallel::detectCores()/2). If you want to maximize processing speed and can minimize other tasks and programs executed on the computer while performing the filtering, more cores can be committed (e.g. n_cores = parallel::detectCores()-1). Always reserve at least one core unassigned for basic operating system functions. 
+
 ## Install
 To install `LotekFilter` package directly from GitHub:
 ```{r install, echo=TRUE, eval=TRUE}
