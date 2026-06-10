@@ -68,6 +68,43 @@ result_summary <- parallel_filter_Lotek <- function(input_files,
 ```
 
 
+## Filtering non-Lotek files
+While the parallel_raw_Lotek() function was designed specifically for processing the raw text output files from Lotek WHS Host and receivers, the parallel_filter_Lotek() function could be applied to detection records from any manufacturer, as long as the data are configured properly. In order to filter out false-positive detections from data files that do not match the formatting from Lotek's WHS Host, the user would need to create one csv file for each receiver that contains the following columns:
+'HexID' - column containing the 4 digit hexidecimal tag code
+'DateTime' - column containing the datetime of the detection in yyyy-mm-dd hh:mm:ss format.
+The standard filtering criteria for other receiver models (e.g. ATS, Teknologic) differ from the Lotek filtering criteria. Most of these standard filtering criteria can be captured using the filter settings arguments in the [parallel_filter()] function. However, the [parallel_filter()] function does not capture the frequency filter criterion commonly applied to ATS and Teknologic receivers. That filter would have to be applied manually afterwards.
+```{r Filter Non-Lotek}
+library(LotekFilter)
+# Hypothetical example filtering csv files derived from ATS receivers (altered to contain necessary columns)
+
+input_files <- list.files(pattern = "ATS_inputs_*")
+output_path <- "C:/Documents/jsats_study/data/"
+
+result_summary <- parallel_filter_Lotek <- function(input_files,
+                                  input_prefix = "Processed_", 
+                                  output_prefix = "Filtered_",
+                                  output_path = output_path,
+                                  
+                                  keep_rejected = TRUE, # TRUE if you want to save a copy of the rejected records with a reason for rejecting
+                                  n_cores    = min(length(input_files), 
+                                                   parallel::detectCores()-2), # 2 cores less than all available or number of files, whatever is smaller
+                                  nominalPRI = 5,           # provide a single numeric tag pulse rate interval to all tags
+                                  
+                                  # Standard ATS filter criteria:
+                                  detection_window = 4,    # detection_window * nominmal PRI = time window that min_detections must occur to be kept
+                                  min_detections = 2,         # standard ATS minimum detections
+                                  sd_threshold = 99999,           # ATS criteria do not have sd threshold - use permissively large threshold to effectively remove this criterion
+                                  multipath_threshold = 0.3,  # time threshold for multipath detections. Detections less than this after first are removed. 
+                                  nominalPRI_threshold = 0.1 # standard ATS PRI tolerance
+)
+
+## Additional ATS frequency filter criteria:
+  # frequency must be between 416.3 - 418.75 kHz
+  # difference in frequency between 2 hits is less than 0.505 kHz
+```
+
+
+
 ## Alternate use cases: Single file
 The LotekFilter package was designed to process batches of raw Lotek TXT files efficienctly. It is possible to use the parallel functions with only a single file. This will attempt to use furrr and future to map parallel processing, but only one core will be assigned. However, it is also possible to bypass the parallel functions and apply the single file functions to a single file. In order to run a single file this way, you must specify all filter criteria as arguments in the function call. This is an example of processing then filtering a single file:
 ```{r single file}
@@ -113,8 +150,3 @@ process_single_file(filepath = input_file,
 
 ```
 
-## Filtering non-Lotek files
-While the parallel_raw_Lotek() function was designed specifically for processing the raw text output files from Lotek WHS Host and receivers, the parallel_filter_Lotek() function could be applied to detection records from any manufacturer, as long as the data are configured properly. In order to filter out false-positive detections from data files that do not match the formatting from Lotek's WHS Host, the user would need to create one csv file for each receiver that contains the following columns:
-'HexID' - column containing the 4 digit hexidecimal tag code
-'DateTime' - column containing the datetime of the detection in yyyy-mm-dd hh:mm:ss format.
-PRI info will be added at the parallel_filter_Lotek() call via a tags lookup table or assigning a fixed PRI value to all tags. 

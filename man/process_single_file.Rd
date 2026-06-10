@@ -10,7 +10,7 @@ process_single_file(filepath, settings = settings)
 \item{filepath}{Path to the input csv file.}
 
 \item{settings}{A named list of filter settings created within
-\code{\link[=parallel_filter_Lotek]{parallel_filter_Lotek()}}. Must include \code{output_path}, \code{input_prefix},
+\code{\link[=parallel_filter]{parallel_filter()}}. Must include \code{output_path}, \code{input_prefix},
 \code{output_prefix}, and all filtering thresholds.}
 }
 \value{
@@ -32,7 +32,7 @@ Processes a single reformatted Lotek detection csv file produced by
 \code{\link[=parallel_raw_Lotek]{parallel_raw_Lotek()}} or \code{\link[=process_single_raw]{process_single_raw()}}. This function applies all
 filtering steps via \code{\link[=all_filter_steps]{all_filter_steps()}}, writes the cleaned output file, and
 returns a one-row summary tibble describing the results. It is primarily
-intended to support \code{\link[=parallel_filter_Lotek]{parallel_filter_Lotek()}}, but can also be used
+intended to support \code{\link[=parallel_filter]{parallel_filter()}}, but can also be used
 independently when processing a single file.
 
 The input csv must contain (at minimum) the fields expected by

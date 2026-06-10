@@ -8,7 +8,7 @@
 #' on the nominalPRI of the tag.
 #'
 #' @param Lotek_input_file a reformatted Lotek detections file previously processed by parallel_raw_Lotek() or process_single_raw()
-#' @param settings a list of filter settings passed from parallel_filter_Lotek()
+#' @param settings a list of filter settings passed from parallel_filter()
 #'
 #' @importFrom dplyr mutate filter arrange group_by ungroup select lag summarise n left_join bind_rows all_of
 #'

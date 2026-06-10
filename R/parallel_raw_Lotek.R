@@ -73,7 +73,7 @@ parallel_raw_Lotek <- function(
     stop("No .TXT files found to process in: ", input_dir_norm)
   }
 
-  # ---- Parallel plan (mirrors parallel_filter_Lotek) ----
+  # ---- Parallel plan (mirrors parallel_filter) ----
   future::plan(future::multisession, workers = n_cores)
   on.exit(future::plan(future::sequential), add = TRUE)
 

@@ -59,7 +59,7 @@
 #'   full.names = TRUE
 #' )
 #'
-#' summary_results <- parallel_filter_Lotek(
+#' summary_results <- parallel_filter(
 #'   input_files   = input_files,
 #'   output_path   = tempdir(),
 #'   output_prefix = "Filtered_",
@@ -69,7 +69,7 @@
 #' }
 #'
 #' @export
-parallel_filter_Lotek <- function(input_files,
+parallel_filter <- function(input_files,
                                   input_prefix = NA, # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
                                   output_prefix = "Filtered_",
                                   output_path,

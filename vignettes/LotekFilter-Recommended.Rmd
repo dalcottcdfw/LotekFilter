@@ -47,7 +47,7 @@ parallel_raw_Lotek(input_path = input_dir,
 
 ## Step 2 - Filter false-positives:
 setwd("C:/Documents/jsats_study/data/") # set the working directory to the location where the pre-processed csv files are stored
-parallel_filter_Lotek(
+parallel_filter(
   input_files = list.files(pattern = ".csv"),
   output_prefix = "Filtered_",
   output_path = "C:/Documents/jsats_study/data/", # store filtered files in the same location. inputs will not be overwritten because of file prefix
@@ -87,7 +87,7 @@ parallel_raw_Lotek(input_path = tmpdir,
 
 # Step 2 - filter out false-positive detections
 setwd(output_dir) # set directory to location where processed files are stored
-parallel_filter_Lotek(
+parallel_filter(
   input_files = list.files(pattern = ".csv"),
   input_prefix = "Processed_", # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
   output_prefix = "Filtered_",

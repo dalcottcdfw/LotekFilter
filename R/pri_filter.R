@@ -9,7 +9,7 @@
 #' causing a violation (such as PRI standard deviation)
 #'
 #' @param dets_df a dataframe containing JSATS detections.
-#' @param settings a list of filter settings inherited from parallel_filter_Lotek()
+#' @param settings a list of filter settings inherited from parallel_filter()
 #'
 #' @return a list containing detections that passed the pri filter and optionally a list of detections that did not
 #'

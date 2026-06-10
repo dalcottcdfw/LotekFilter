@@ -9,7 +9,7 @@ pri_filter(dets_df, settings = settings)
 \arguments{
 \item{dets_df}{a dataframe containing JSATS detections.}
 
-\item{settings}{a list of filter settings inherited from parallel_filter_Lotek()}
+\item{settings}{a list of filter settings inherited from parallel_filter()}
 }
 \value{
 a list containing detections that passed the pri filter and optionally a list of detections that did not

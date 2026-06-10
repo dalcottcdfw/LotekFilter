@@ -9,7 +9,7 @@ all_filter_steps(Lotek_input_file, settings = settings)
 \arguments{
 \item{Lotek_input_file}{a reformatted Lotek detections file previously processed by parallel_raw_Lotek() or process_single_raw()}
 
-\item{settings}{a list of filter settings passed from parallel_filter_Lotek()}
+\item{settings}{a list of filter settings passed from parallel_filter()}
 }
 \value{
 a filtered dataframe with all filter criteria applied

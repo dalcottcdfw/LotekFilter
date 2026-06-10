@@ -5,7 +5,7 @@
 #' [parallel_raw_Lotek()] or [process_single_raw()]. This function applies all
 #' filtering steps via [all_filter_steps()], writes the cleaned output file, and
 #' returns a one-row summary tibble describing the results. It is primarily
-#' intended to support [parallel_filter_Lotek()], but can also be used
+#' intended to support [parallel_filter()], but can also be used
 #' independently when processing a single file.
 #'
 #' The input csv must contain (at minimum) the fields expected by
@@ -14,7 +14,7 @@
 #'
 #' @param filepath Path to the input csv file.
 #' @param settings A named list of filter settings created within
-#'   [parallel_filter_Lotek()]. Must include `output_path`, `input_prefix`,
+#'   [parallel_filter()]. Must include `output_path`, `input_prefix`,
 #'   `output_prefix`, and all filtering thresholds.
 #'
 #' @return
