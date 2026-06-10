@@ -75,10 +75,18 @@ results_summary <- parallel_filter_Lotek(
 )
 results_summary # view summary table of file processing
 
-## Step 3 - combine all filtered files into one dataframe object in R environment
+
+# Step 3 - combine all filtered files into one dataframe object in R environment
 filtered_files <- list.files(output_dir, pattern = "Filtered_*")
 
-# Read and combine filtered data files
-df <- do.call(rbind, lapply(filtered_files, read.csv))
-# df is a dataframe of all filtered detections in the R environment, ready for data verification and analysis
+# Read each filtered csv file and add a filename column
+df_list <- lapply(filtered_files, function(file) {
+  df <- read.csv(file)
+  df$Filename <- basename(file) # add source file name for identifying receiver
+  df
+})
+
+# Combine into one data frame
+df <- do.call(rbind, df_list)
+# df is a final dataframe object with all filtered detections
 ```

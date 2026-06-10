@@ -65,7 +65,6 @@ result_summary <- parallel_filter_Lotek <- function(input_files,
                                   multipath_threshold = 0.5,  # time threshold for multipath detections. Detections less than this after first are removed. 
                                   nominalPRI_threshold = 0.2 # observed PRI must be within this amount of nominal PRI.
 )
-result_summary
 ```
 
 
@@ -114,3 +113,8 @@ process_single_file(filepath = input_file,
 
 ```
 
+## Filtering non-Lotek files
+While the parallel_raw_Lotek() function was designed specifically for processing the raw text output files from Lotek WHS Host and receivers, the parallel_filter_Lotek() function could be applied to detection records from any manufacturer, as long as the data are configured properly. In order to filter out false-positive detections from data files that do not match the formatting from Lotek's WHS Host, the user would need to create one csv file for each receiver that contains the following columns:
+'HexID' - column containing the 4 digit hexidecimal tag code
+'DateTime' - column containing the datetime of the detection in yyyy-mm-dd hh:mm:ss format.
+PRI info will be added at the parallel_filter_Lotek() call via a tags lookup table or assigning a fixed PRI value to all tags. 
