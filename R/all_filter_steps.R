@@ -26,11 +26,10 @@ all_filter_steps <- function(Lotek_input_file,
 
 
   # ---- Step 1: Sort and compute time differences ----
-  Lotek_input_file <- Lotek_input_file |>
-    dplyr::arrange(HexID, DateTime) |>
-    dplyr::group_by(HexID) |>
-    dplyr::mutate(time_lag = as.numeric(difftime(DateTime, dplyr::lag(DateTime), units = "secs"))) |>
-    dplyr::ungroup()
+  Lotek_input_file <- dplyr::arrange(Lotek_input_file, HexID, DateTime)
+  Lotek_input_file <- dplyr::group_by(Lotek_input_file, HexID)
+  Lotek_input_file$time_lag <- as.numeric(difftime(Lotek_input_file$DateTime, dplyr::lag(Lotek_input_file$DateTime), units = "secs"))
+  Lotek_input_file <- dplyr::ungroup(Lotek_input_file)
 
   # ---- Step 2: Remove multipath (time_lag < 0.3s) ----
   multipath_records <- dplyr::filter(Lotek_input_file, !is.na(time_lag) & time_lag < multipath_threshold)
