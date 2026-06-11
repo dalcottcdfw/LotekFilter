@@ -32,7 +32,7 @@ into one final data frame in the R environment.
 
 You can install the development version of LotekFilter from
 [GitHub](https://github.com/) using
-devtools::install_github("dalcottcdfw/LotekFilter"), or:
+devtools::install_github(“dalcottcdfw/LotekFilter”), or:
 
 ``` r
 # install.packages("pak")
@@ -62,7 +62,7 @@ parallel_raw_Lotek(input_path = "C:/path/to/input/files",
 tags <- read.csv("my_tag_PRIs.csv") # contains a column of hexidecimal format tag codes and a column of the tag's pulse rate interval
 
 results_summary <- parallel_filter(
-  input_files = list.files(pattern = ".csv"),
+  input_files = list.files(path = output_dir, pattern = ".csv", full.names = TRUE),
   input_prefix = "Processed_", # if the input files have a prefix that you want to remove when saving the output ("Processed_..." , "raw_...")
   output_prefix = "Filtered_",
   output_path = output_dir,

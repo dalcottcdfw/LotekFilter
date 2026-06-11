@@ -106,9 +106,8 @@ parallel_raw_Lotek(input_path = input_dir,
 
 
 ## Step 2 - Filter false-positives:
-setwd("C:/Documents/jsats_study/data/") # set the working directory to the location where the pre-processed csv files are stored
 parallel_filter(
-  input_files = list.files(pattern = ".csv"),
+  input_files = list.files(path = output_dir, pattern = ".csv", full.names = TRUE),
   output_prefix = "Filtered_",
   output_path = "C:/Documents/jsats_study/data/", # store filtered files in the same location. inputs will not be overwritten because of file prefix
   keep_rejected = FALSE, # TRUE if you want to save a copy of the rejected records with a reason for rejecting
