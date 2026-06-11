@@ -3,9 +3,9 @@ Title: Filter and Process Raw Lotek JSATS Files
 Version: 0.0.1
 Authors@R: 
     person("Derrick", "Alcott", , "derrick.alcott@wildlife.ca.gov", role = c("aut", "cre"))
-Description: Processes, reformats, and removes false-positive detections from Lotek JSATS acoustic telemetry receivers. Designed to process multiple files in parallel using multiple CPU cores to increase processing efficiency.
+Description: Processes, reformats, and removes false-positive detections from Lotek (or other) JSATS acoustic telemetry receivers. Designed to process multiple files in parallel using multiple CPU cores to increase processing efficiency.
 License: MIT + file LICENSE
-Depends: R (>= 4.1.0)
+Depends: R (>= 3.6.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0
