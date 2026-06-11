@@ -27,6 +27,66 @@ To install `LotekFilter` package directly from GitHub:
 devtools::install_github("dalcottcdfw/LotekFilter") # install from GitHub
 ```
 
+## Functional example using provided data
+This is a functional example that uses example data files provided with the package download. 
+```{r echo=TRUE, eval=FALSE}
+# install.packages(c("devtools", "remotes"))
+# devtools::install_github("dalcottcdfw/LotekFilter")
+
+library(LotekFilter)
+output_dir <- "C:/Desktop/path/to/store/outputs" # change to your preferred output storage location
+
+# read in example tag codes data
+tags <- read.csv(paste(file.path(system.file("extdata", package = "LotekFilter"), "example_tagcodes.csv"), sep = "/"))
+
+# unzip the zipped detections data
+zip_path <- system.file("extdata", "ExampleDetectionsFiles.zip", package = "LotekFilter")
+tmpdir <- tempdir() # create a tempory dir to store the zip folder contents
+unzip(zip_path, exdir = tmpdir) # unzip and store in temporary dir
+list.files(tmpdir, pattern = ".TXT") # check that the detection test files are in the zip folder, should contain two "WHS4k..."files
+
+# Step 1 - process raw files
+parallel_raw_Lotek(input_path = tmpdir,
+                   raw_files = list.files(tmpdir, pattern = "\\.TXT$"),
+                   output_path = output_dir,
+                   output_prefix = "Processed_",
+                   allowable_tagcodes = tags$TagID_Hex,
+                   tz = "Etc/GMT+8",
+                   n_cores = 2)
+
+
+# Step 2 - filter out false-positive detections
+setwd(output_dir) # set directory to location where processed files are stored
+summary <- parallel_filter( # create a summary table while exporting files
+  input_files = list.files(pattern = ".csv"),
+  input_prefix = "Processed_", # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
+  output_prefix = "Filtered_",
+  output_path = output_dir,
+  
+  n_cores    = 2, # number of cores to use for parallel processing (1 input file per core)
+  
+  pri_table = tags,            # provide name of tag pri lookup table AND
+  pri_tag_col = "TagID_Hex",          # provide name of hex tag code column in tag lookup table AND
+  pri_value_col = "PRI_nominal",        # provide name of column containing tag pulse rate interval in tags lookup table
+)
+
+
+## Step 3 - combine all filtered files into one dataframe object in R environment
+filtered_files <- list.files(output_dir, pattern = "Filtered_*") # change as needed
+
+# Read each file and add a filename column
+df_list <- lapply(filtered_files, function(file) {
+  df <- read.csv(file)
+  df$Filename <- basename(file) # add source file name for identifying receiver
+  df
+})
+
+# Combine into one data frame
+df <- do.call(rbind, df_list)
+# df is a final dataframe object with all filtered detections
+
+```
+
 ## Example workflow
 Here's a quick example workflow of how the package was designed to function in most cases:
 ```{r workflow, echo=TRUE, eval=FALSE}
@@ -61,61 +121,6 @@ parallel_filter(
 )
 ```
 
-## Functional example using provided data
-This is a functional example that uses example data files provided with the package download. 
-```{r echo=TRUE, eval=FALSE}
-library(LotekFilter)
-output_dir <- "C:/Desktop/path/to/store/outputs" # change to your preferred output storage location
-
-tags <- read.csv(paste(file.path(system.file("extdata", package = "LotekFilter"), "example_tagcodes.csv"), sep = "/"))# read in example tag codes data
-
-# unzip the zipped detections data
-zip_path <- system.file("extdata", "ExampleDetectionsFiles.zip", package = "LotekFilter")
-tmpdir <- tempdir()
-unzip(zip_path, exdir = tmpdir)
-list.files(tmpdir, pattern = ".TXT") # check that the detection test files are in the zip folder, should contain two "WHS4k..."files
-
-# Step 1 - process raw files
-parallel_raw_Lotek(input_path = tmpdir,
-                   raw_files = list.files(tmpdir, pattern = "\\.TXT$"),
-                   output_path = output_dir,
-                   output_prefix = "Processed_",
-                   allowable_tagcodes = tags$TagID_Hex,
-                   tz = "Etc/GMT+8",
-                   n_cores = 2)
-
-
-# Step 2 - filter out false-positive detections
-setwd(output_dir) # set directory to location where processed files are stored
-parallel_filter(
-  input_files = list.files(pattern = ".csv"),
-  input_prefix = "Processed_", # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
-  output_prefix = "Filtered_",
-  output_path = output_dir,
-  
-  n_cores    = 2, # number of cores to use for parallel processing (1 input file per core)
-  
-  pri_table = tags,            # provide name of tag pri lookup table AND
-  pri_tag_col = "TagID_Hex",          # provide name of hex tag code column in tag lookup table AND
-  pri_value_col = "PRI_nominal",        # provide name of column containing tag pulse rate interval in tags lookup table
-)
-
-# Step 3 - combine all filtered files into one dataframe object in R environment
-filtered_files <- list.files(output_dir, pattern = "Filtered_*")
-
-
-# Read each file and add a filename column
-df_list <- lapply(filtered_files, function(file) {
-  df <- read.csv(file)
-  df$Filename <- basename(file) # add source file name for identifying receiver
-  df
-})
-
-# Combine into one data frame
-df <- do.call(rbind, df_list)
-# df is a final dataframe object with all filtered detections
-
-```
 It is highly recommended to use a vector of allowable tag codes to filter the raw detections data as early as possible. This will greatly speed up the rest of the process. However, it is possible to skip this step.
 These examples use default filter criteria which are based on the filter parameters applied by Arnold Ammann for use in the California Central Valley JSATS telemetry database hosted on NOAA's ERDDAP server (see [Ammann 2020; Environ Biol Fish](https://www.bing.com/ck/a?!&&p=4baefa46e97731d3f46eff5438ead5170f8a92604b70a181db6faf9d2092c5f4JmltdHM9MTc4MDk2MzIwMA&ptn=3&ver=2&hsh=4&fclid=2870c1ec-3641-6797-2db0-d5f537c566a5&psq=United+States+Bureau+of+Reclamation+Interagency+Agreement+%22R18PG00009%22&u=a1aHR0cHM6Ly9yZXBvc2l0b3J5LmxpYnJhcnkubm9hYS5nb3Yvdmlldy9ub2FhLzY4MTY1L25vYWFfNjgxNjVfRFMxLnBkZg)). For details on filter criteria and alternative uses of `LotekFilter` functions, see the vignette 'Advanced Usage'.
 
