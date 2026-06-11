@@ -32,7 +32,7 @@ into one final data frame in the R environment.
 
 You can install the development version of LotekFilter from
 [GitHub](https://github.com/) using
-devtools::install_github(“dalcottcdfw/LotekFilter”), or:
+devtools::install_github("dalcottcdfw/LotekFilter"), or:
 
 ``` r
 # install.packages("pak")
