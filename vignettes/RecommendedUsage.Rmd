@@ -24,15 +24,14 @@ Lotek JSATS receivers generate large, encrypted .JST files. The encrypted .JST f
 ## Install
 To install `LotekFilter` package directly from GitHub:
 ```{r install, echo=TRUE, eval=TRUE}
-devtools::install_github("dalcottcdfw/LotekFilter") # install from GitHub
+# install.packages(c("pak, "devtools", "remotes")) # if needed,install github installer packages
+# devtools::install_github("dalcottcdfw/LotekFilter") # install from GitHub using depreciated devtools::install_github
+pak::pak("dalcottcdfw/LotekFilter") #install using modern pak::pak()
 ```
 
 ## Functional example using provided data
 This is a functional example that uses example data files provided with the package download. 
 ```{r echo=TRUE, eval=FALSE}
-# install.packages(c("devtools", "remotes"))
-# devtools::install_github("dalcottcdfw/LotekFilter")
-
 library(LotekFilter)
 output_dir <- "C:/Desktop/path/to/store/outputs" # change to your preferred output storage location
 
@@ -49,16 +48,15 @@ list.files(tmpdir, pattern = ".TXT") # check that the detection test files are i
 parallel_raw_Lotek(input_path = tmpdir,
                    raw_files = list.files(tmpdir, pattern = "\\.TXT$"),
                    output_path = output_dir,
-                   output_prefix = "Processed_",
-                   allowable_tagcodes = tags$TagID_Hex,
+                   output_prefix = "Processed_", # optional, add prefix to file name of processed files
+                   allowable_tagcodes = tags$TagID_Hex, #recommended: provide vector of allowable tag codes to retain
                    tz = "Etc/GMT+8",
-                   n_cores = 2)
+                   n_cores = 2) # only two input files, so no more than 2 cores are needed
 
 
 # Step 2 - filter out false-positive detections
-setwd(output_dir) # set directory to location where processed files are stored
 summary <- parallel_filter( # create a summary table while exporting files
-  input_files = list.files(pattern = ".csv"),
+  input_files = list.files(path = output_dir, pattern = ".csv", full.names = TRUE),
   input_prefix = "Processed_", # if the input files have a prefix that you want to remove when saving the output ("Raw_..." or "Prefiltered_...")
   output_prefix = "Filtered_",
   output_path = output_dir,

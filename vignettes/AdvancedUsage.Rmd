@@ -71,7 +71,7 @@ result_summary <- parallel_filter_Lotek <- function(input_files,
 ## Filtering non-Lotek files
 While the parallel_raw_Lotek() function was designed specifically for processing the raw text output files from Lotek WHS Host and receivers, the parallel_filter_Lotek() function could be applied to detection records from any manufacturer, as long as the data are configured properly. In order to filter out false-positive detections from data files that do not match the formatting from Lotek's WHS Host, the user would need to create one csv file for each receiver that contains the following columns:
 'HexID' - column containing the 4 digit hexidecimal tag code
-'DateTime' - column containing the datetime of the detection in yyyy-mm-dd hh:mm:ss format.
+'DateTime' - column containing the datetime of the detection in 'yyyy-mm-dd hh:mm:ss' format.
 The standard filtering criteria for other receiver models (e.g. ATS, Teknologic) differ from the Lotek filtering criteria. Most of these standard filtering criteria can be captured using the filter settings arguments in the [parallel_filter()] function. However, the [parallel_filter()] function does not capture the frequency filter criterion commonly applied to ATS and Teknologic receivers. That filter would have to be applied manually afterwards.
 ```{r Filter Non-Lotek}
 library(LotekFilter)
@@ -106,7 +106,7 @@ result_summary <- parallel_filter_Lotek <- function(input_files,
 
 
 ## Alternate use cases: Single file
-The LotekFilter package was designed to process batches of raw Lotek TXT files efficienctly. It is possible to use the parallel functions with only a single file. This will attempt to use furrr and future to map parallel processing, but only one core will be assigned. However, it is also possible to bypass the parallel functions and apply the single file functions to a single file. In order to run a single file this way, you must specify all filter criteria as arguments in the function call. This is an example of processing then filtering a single file:
+The LotekFilter package was designed to process batches of raw Lotek TXT files efficiently. It is possible to use the parallel functions with only a single file. This will attempt to use furrr and future to map parallel processing, but only one core will be assigned. However, it is also possible to bypass the parallel functions and apply the single file functions to a single file. In order to run a single file this way, you must specify all filter criteria as arguments in the function call. This is an example of processing then filtering a single file:
 ```{r single file}
 library(LotekFilter)
 tags <- read.csv(paste(file.path(system.file("extdata", package = "LotekFilter"), "example_tagcodes.csv"), sep = "/"))# read in example tag codes 
@@ -118,7 +118,7 @@ list.files(tmpdir, pattern = ".TXT") # check that the detection test files are i
 output_dir = system.file("extdata", package = "LotekFilter")
 
 
-# Convert a single raw Lotek file to csv
+# Step 1 - Convert a single raw Lotek file to csv
 process_single_raw(raw_file = list.files(tmpdir, pattern = ".TXT")[1], # first example file from package extdata
                                input_path = tmpdir, # temporary directory for zip file contents (change as needed)
                                output_path = output_dir,
@@ -127,7 +127,7 @@ process_single_raw(raw_file = list.files(tmpdir, pattern = ".TXT")[1], # first e
                                tz = "Etc/GMT+8")
 
 
-# False-positive filter a single Lotek file
+# Step 2 - False-positive filter a single Lotek file
 settings = list(inputpath = output_dir,
                 output_path = output_dir,
                 input_prefix = "WHS4k-",
